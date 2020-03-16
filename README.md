@@ -28,7 +28,7 @@ https://www.nest-simulator.org/
 
 
 ## Creating Environment.
-
+```
 git clone https://github.com/juanmav/spiking.git
 cd spiking
 apt-get install libgl1-mesa-glx libegl1-mesa libxrandr2 libxrandr2 libxss1 libxcursor1 libxcomposite1 libasound2 libxi6 libxtst6
@@ -39,4 +39,4 @@ conda install -c conda-forge nest-simulator jupyterlab
 conda install -c anaconda sympy
 conda install -c intel scikit-learn
 conda install -c conda-forge matplotlib
-
+```
