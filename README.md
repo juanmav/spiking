@@ -29,14 +29,21 @@ https://www.nest-simulator.org/
 
 ## Creating Environment.
 ```
-git clone https://github.com/juanmav/spiking.git
-cd spiking
-apt-get install libgl1-mesa-glx libegl1-mesa libxrandr2 libxrandr2 libxss1 libxcursor1 libxcomposite1 libasound2 libxi6 libxtst6
 wget https://repo.anaconda.com/archive/Anaconda3-2019.10-Linux-x86_64.sh
 bash ./Anaconda3-2019.10-Linux-x86_64.sh
+
+git clone https://github.com/juanmav/spiking.git
+cd spiking
+apt-get install libgl1-mesa-glx libegl1-mesa libxrandr2 libxrandr2 libxss1 libxcursor1 libxcomposite1 libasound2 libxi6 libxtst6 libopenblas-dev
 conda create -n spiking python=3.6
-conda install -c conda-forge nest-simulator jupyterlab
-conda install -c anaconda sympy
-conda install -c intel scikit-learn
-conda install -c conda-forge matplotlib
+conda install -c conda-forge nest-simulator jupyterlab matplotlib pillow
+
+python testPlot.py
 ```
+
+The last command should create two images (test0.png and test1.png) if it
+does the installation was successful.
+
+## Some stuff, how things are "connected"
+
+[how connections are](assets/receptivefield_v1_connection.jpeg)
