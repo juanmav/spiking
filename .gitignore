@@ -131,3 +131,12 @@ dmypy.json
 # PyCharm files.
 .idea
 
+# Project files
+output/*
+!output/README.md
+!output/spikedetector
+output/spikedetector/*
+!output/spikedetector/README.md
+test0.png
+test1.png
+

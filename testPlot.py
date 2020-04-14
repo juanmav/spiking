@@ -12,8 +12,16 @@ import nest.topology as topology
 nest.ResetKernel()
 
 layer = topology.CreateLayer({
-    "rows": 5,
-    "columns": 5,
+    "extent": [1.1, 1.1],
+    "rows": 9,
+    "columns": 9,
+    "elements": "iaf_psc_alpha"
+})
+
+layer1 = topology.CreateLayer({
+    "extent": [1.1, 1.1],
+    "rows": 4,
+    "columns": 4,
     "elements": "iaf_psc_alpha"
 })
 
@@ -32,18 +40,20 @@ projection = {
     }
 }
 
-topology.ConnectLayers(layer, layer, projection)
-
-fig = topology.PlotLayer(layer, nodesize=80)
+topology.ConnectLayers(layer1, layer, projection)
+fig = topology.PlotLayer(layer, nodesize=40, nodecolor='green')
+topology.PlotLayer(layer1, fig, nodesize=40, nodecolor='red')
 fig.savefig('test0')
-center = topology.FindCenterElement(layer)
+center = topology.FindCenterElement(layer1)
 topology.PlotTargets(
     center,
     layer,
     fig=fig,
     mask=projection["mask"],
+    mask_color='blue',
     kernel=projection["kernel"],
-    tgt_color='red'
+    kernel_color='black',
+    tgt_color='yellow'
 )
 
 fig.savefig('test1')
