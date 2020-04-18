@@ -2,14 +2,16 @@ import pandas as pd
 import numpy as np
 import png
 
+# TODO deprecate this file.
+
 # TODO create configuration file for shared values.
 simulation_time = 250
 frames = simulation_time * 10
-layer_first_id = 19606
-layer_size = 9801
+layer_first_id = 39210
+layer_size = 784
 
 data = pd.read_csv(
-    'spike_detector-41345-0.gdf',
+    'spike_detector-59463-0.gdf',
     '\t',
     header=None,
     usecols=[0, 1],
@@ -41,5 +43,5 @@ for step in range(1, frames):
     image.save('./output/spikedetector/' + str(step) + '.png')
 
 # TODO add convert images to a video
-# ffmpeg -i %d.png video.webm
+# ffmpeg -i %d.png -vf "setpts=(1/5)*PTS" video.webm
 #

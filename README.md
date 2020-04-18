@@ -38,6 +38,8 @@ apt-get install libgl1-mesa-glx libegl1-mesa libxrandr2 libxrandr2 libxss1 libxc
 conda create -n spiking python=3.6
 conda install -c conda-forge nest-simulator jupyterlab matplotlib pillow
 conda install -c conda-forge pypng
+conda install -c conda-forge ffmpeg
+conda install -c conda-forge joblib
 python testPlot.py
 ```
 
@@ -47,3 +49,23 @@ does the installation was successful.
 ## Some stuff, how things are "connected"
 
 [how connections are](assets/receptivefield_v1_connection.jpeg)
+
+## To run the main simulation
+
+> python main.py
+
+You can check results on the `./output` folder.
+
+![](./assets/pattern_change_animation.gif)
+
+### Output folder layout
+
+![](./assets/outputlayout.png)
+
+## TODO
+
+- Improve LayerRecorder
+- Move functions from main.py to utils and/or another tools.
+- Make parameters logs for each run. (connections, frequencies, array size, etc etc).
+- Document `./output` folder layout.
+
