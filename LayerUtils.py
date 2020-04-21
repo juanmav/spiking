@@ -98,41 +98,42 @@ class Recorder:
         image.save(self.output_folder + str(step) + '.png')
 
 
-def connect_and_plot_layers_with_projection(origin, target, projection, filename, simulation_prefix):
-    fig, ax = plt.subplots()
+def connect_and_plot_layers_with_projection(origin, target, projection, filename, simulation_prefix, plot=True):
     topology.ConnectLayers(origin, target, projection)
-    topology.PlotLayer(target, fig, nodesize=40, nodecolor='red')
-    topology.PlotLayer(origin, fig, nodesize=40, nodecolor='green')
-    center = topology.FindCenterElement(origin)
+    if plot:
+        fig, ax = plt.subplots()
+        topology.PlotLayer(target, fig, nodesize=40, nodecolor='red')
+        topology.PlotLayer(origin, fig, nodesize=40, nodecolor='green')
+        center = topology.FindCenterElement(origin)
 
-    ax.set_title(filename)
-    ax.legend(frameon=False, loc='lower center', ncol=2)
+        ax.set_title(filename)
+        ax.legend(frameon=False, loc='lower center', ncol=2)
 
-    plt.scatter([], [], c='green', alpha=0.3, s=40, label='Pre')
-    plt.scatter([], [], c='red', alpha=0.3, s=40, label='Post')
-    plt.scatter([], [], c='yellow', alpha=0.3, s=20, label='Target')
-    plt.legend(loc='lower center',  bbox_to_anchor=(0.5, -0.15), frameon=False, ncol=3)
+        plt.scatter([], [], c='green', alpha=0.3, s=40, label='Pre')
+        plt.scatter([], [], c='red', alpha=0.3, s=40, label='Post')
+        plt.scatter([], [], c='yellow', alpha=0.3, s=20, label='Target')
+        plt.legend(loc='lower center',  bbox_to_anchor=(0.5, -0.15), frameon=False, ncol=3)
 
-    if ("mask" in projection) and ("kernel" in projection):
-        topology.PlotTargets(
-            center,
-            target,
-            fig=fig,
-            mask=projection["mask"],
-            mask_color='blue',
-            kernel=projection["kernel"],
-            kernel_color='black',
-            tgt_color='yellow',
-            tgt_size=10
-        )
-    else:
-        topology.PlotTargets(
-            center,
-            target,
-            fig=fig,
-            tgt_color='yellow',
-            tgt_size=10
-        )
-    folder = './output/' + simulation_prefix + '/layer/'
-    Path(folder).mkdir(parents=True, exist_ok=True)
-    fig.savefig(folder + filename + '.png')
+        if ("mask" in projection) and ("kernel" in projection):
+            topology.PlotTargets(
+                center,
+                target,
+                fig=fig,
+                mask=projection["mask"],
+                mask_color='blue',
+                kernel=projection["kernel"],
+                kernel_color='black',
+                tgt_color='yellow',
+                tgt_size=10
+            )
+        else:
+            topology.PlotTargets(
+                center,
+                target,
+                fig=fig,
+                tgt_color='yellow',
+                tgt_size=10
+            )
+        folder = './output/' + simulation_prefix + '/layer/'
+        Path(folder).mkdir(parents=True, exist_ok=True)
+        fig.savefig(folder + filename + '.png')
