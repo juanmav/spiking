@@ -4,11 +4,11 @@ import numpy as np
 import pandas as pd
 import png
 import subprocess
-from joblib import Parallel, delayed
 import matplotlib.pyplot as plt
 from pathlib import Path
 import glob
-
+from mpi4py import MPI
+import multiprocessing
 
 def take_poisson_layer_snapshot(layer, layer_name, simulation_prefix):
     layer_ids = nest.GetNodes(layer)
@@ -46,6 +46,9 @@ class Recorder:
 
     # TODO create all in memory and read the file and make a +1 to the position.
     def make_video(self, group_frames=True, play_it=True):
+        # https://www.youtube.com/watch?v=36nCgG40DJo HPC
+        # https://www.youtube.com/watch?v=RR4SoktDQAw Threads python.
+
         print('This should be call after simulation.')
         data = pd.concat(
             [
@@ -67,19 +70,32 @@ class Recorder:
 
         Path(self.output_folder).mkdir(parents=True, exist_ok=True)
 
-        # for step in range(1, frames):
-        #    self.process_image(step, ids, array, grouped)
-        Parallel(n_jobs=-3)(delayed(self.process_image)(step, ids, array, grouped) for step in range(1, frames))
+        comm = MPI.COMM_WORLD
+        rank = comm.Get_rank()
+        size = comm.Get_size()
 
-        subprocess.call(
-            'ffmpeg -i ' + self.output_folder + '%d.png -vf "setpts=(1/3)*PTS"  -threads 4 ' + self.output_folder + '0video.webm',
-            shell=True
-        )
+        frames_per_rank = int(frames / size)
+        from_frame = frames_per_rank * rank
+        to_frame = (rank + 1) * frames_per_rank
 
-        if play_it:
-            subprocess.call('xdg-open ' + self.output_folder + '0video.webm', shell=True)
+        parameters = [[step, ids, array, grouped] for step in range(from_frame, to_frame)]
+        pool = multiprocessing.Pool(processes=4)
+        pool.map(self.process_image, parameters)
 
-    def process_image(self, step, ids, array, grouped):
+        # Synchronization point
+        comm.barrier()
+
+        if rank == 0:
+            subprocess.call(
+                'ffmpeg -i ' + self.output_folder + '%d.png -vf "setpts=(1/3)*PTS"  -threads 4 ' + self.output_folder + '0video.webm',
+                shell=True
+            )
+
+            if play_it:
+                subprocess.call('xdg-open ' + self.output_folder + '0video.webm', shell=True)
+
+    def process_image(self, parameters):
+        [step, ids, array, grouped] = parameters
         print("Frame: " + str(step))
         image_frame_dict = dict(zip(ids, array.T))
 

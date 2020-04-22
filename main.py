@@ -7,9 +7,9 @@ from LayerUtils import take_poisson_layer_snapshot, Recorder, connect_and_plot_l
 from RetinaUtils import image_array_to_retina, array_from_image
 
 nest.ResetKernel()
-nest.SetKernelStatus({"local_num_threads": 4})
+nest.SetKernelStatus({"local_num_threads": 2})
 
-simulation_time = 1000
+simulation_time = 250
 change_pattern_step = 250
 simulation_prefix = time.strftime("%Y%m%d-%H-%M-%S")
 
@@ -19,7 +19,7 @@ RECEPTIVE_FIELD_HEIGHT = 99
 
 # Total neuros per combined layer, Excitatory plus Inhibitory neurons.
 # Distribution is usually 1 inhibitory, 4 excitatory
-TOTAL_NEUROS_PER_COMBINED_LAYER = 15000
+TOTAL_NEUROS_PER_COMBINED_LAYER = 1000
 TOTAL_EXCITATORY = TOTAL_NEUROS_PER_COMBINED_LAYER * 0.8
 TOTAL_INHIBITORY = TOTAL_NEUROS_PER_COMBINED_LAYER * 0.2
 # Square layer proportional to the amount.
@@ -168,37 +168,38 @@ in_on_center = topology.CreateLayer(layer_inhibitory_dict)
 ex_off_center = topology.CreateLayer(layer_excitatory_dict)
 in_off_center = topology.CreateLayer(layer_inhibitory_dict)
 
+plotLayers = False
 
 # Connections
 # Receptive field to parrot
-connect_and_plot_layers_with_projection(full_retina_on, parrot_retina_on, conn_retina_parrot_dict, "1.retina_to_parrot_on", simulation_prefix)
-connect_and_plot_layers_with_projection(full_retina_off, parrot_retina_off, conn_retina_parrot_dict, "2.retina_to_parrot_off", simulation_prefix)
+connect_and_plot_layers_with_projection(full_retina_on, parrot_retina_on, conn_retina_parrot_dict, "1.retina_to_parrot_on", simulation_prefix, plot=plotLayers)
+connect_and_plot_layers_with_projection(full_retina_off, parrot_retina_off, conn_retina_parrot_dict, "2.retina_to_parrot_off", simulation_prefix, plot=plotLayers)
 
 # Parrot to V1
-connect_and_plot_layers_with_projection(parrot_retina_on, ex_on_center, conn_parrot_v1_dict, "3.parrot_to_ex_on", simulation_prefix)
-connect_and_plot_layers_with_projection(parrot_retina_on, in_on_center, conn_parrot_v1_dict, "4.parrot_to_in_on", simulation_prefix)
+connect_and_plot_layers_with_projection(parrot_retina_on, ex_on_center, conn_parrot_v1_dict, "3.parrot_to_ex_on", simulation_prefix, plot=plotLayers)
+connect_and_plot_layers_with_projection(parrot_retina_on, in_on_center, conn_parrot_v1_dict, "4.parrot_to_in_on", simulation_prefix, plot=plotLayers)
 
-connect_and_plot_layers_with_projection(parrot_retina_off, ex_off_center, conn_parrot_v1_dict, "5.parrot_to_ex_off", simulation_prefix)
-connect_and_plot_layers_with_projection(parrot_retina_off, in_off_center, conn_parrot_v1_dict, "6.parrot_to_in_off", simulation_prefix)
+connect_and_plot_layers_with_projection(parrot_retina_off, ex_off_center, conn_parrot_v1_dict, "5.parrot_to_ex_off", simulation_prefix, plot=plotLayers)
+connect_and_plot_layers_with_projection(parrot_retina_off, in_off_center, conn_parrot_v1_dict, "6.parrot_to_in_off", simulation_prefix, plot=plotLayers)
 
 # Lateral connection V1
 # ON <==> ON
-connect_and_plot_layers_with_projection(ex_on_center, ex_on_center, conn_ee_dict, "7.ex_on_to_ex_on", simulation_prefix)
-connect_and_plot_layers_with_projection(ex_on_center, in_on_center, conn_ei_dict, "8.ex_on_to_in_on", simulation_prefix)
-connect_and_plot_layers_with_projection(in_on_center, ex_on_center, conn_ei_dict, "9.in_on_to_ex_on", simulation_prefix)
+connect_and_plot_layers_with_projection(ex_on_center, ex_on_center, conn_ee_dict, "7.ex_on_to_ex_on", simulation_prefix, plot=plotLayers)
+connect_and_plot_layers_with_projection(ex_on_center, in_on_center, conn_ei_dict, "8.ex_on_to_in_on", simulation_prefix, plot=plotLayers)
+connect_and_plot_layers_with_projection(in_on_center, ex_on_center, conn_ei_dict, "9.in_on_to_ex_on", simulation_prefix, plot=plotLayers)
 
 # OFF <==> OFF
-connect_and_plot_layers_with_projection(ex_off_center, ex_off_center, conn_ee_dict, "10.ex_off_to_ex_off", simulation_prefix)
-connect_and_plot_layers_with_projection(ex_off_center, in_off_center, conn_ei_dict, "11.ex_off_to_in_on", simulation_prefix)
-connect_and_plot_layers_with_projection(in_off_center, ex_off_center, conn_ie_dict, "12.in_off_to_ex_off", simulation_prefix)
+connect_and_plot_layers_with_projection(ex_off_center, ex_off_center, conn_ee_dict, "10.ex_off_to_ex_off", simulation_prefix, plot=plotLayers)
+connect_and_plot_layers_with_projection(ex_off_center, in_off_center, conn_ei_dict, "11.ex_off_to_in_on", simulation_prefix, plot=plotLayers)
+connect_and_plot_layers_with_projection(in_off_center, ex_off_center, conn_ie_dict, "12.in_off_to_ex_off", simulation_prefix, plot=plotLayers)
 
 # INH_ON ==> OFF
-connect_and_plot_layers_with_projection(in_on_center, ex_off_center, conn_ie_dict, "13.in_on_to_ex_off", simulation_prefix)
-connect_and_plot_layers_with_projection(in_on_center, in_off_center, conn_ii_dict, "14.in_on_to_in_off", simulation_prefix)
+connect_and_plot_layers_with_projection(in_on_center, ex_off_center, conn_ie_dict, "13.in_on_to_ex_off", simulation_prefix, plot=plotLayers)
+connect_and_plot_layers_with_projection(in_on_center, in_off_center, conn_ii_dict, "14.in_on_to_in_off", simulation_prefix, plot=plotLayers)
 
 # INH_OFF => ON
-connect_and_plot_layers_with_projection(in_off_center, ex_on_center, conn_ie_dict, "15.in_off_to_ex_on", simulation_prefix)
-connect_and_plot_layers_with_projection(in_off_center, in_on_center, conn_ii_dict, "16.in_off_to_in_on", simulation_prefix)
+connect_and_plot_layers_with_projection(in_off_center, ex_on_center, conn_ie_dict, "15.in_off_to_ex_on", simulation_prefix, plot=plotLayers)
+connect_and_plot_layers_with_projection(in_off_center, in_on_center, conn_ii_dict, "16.in_off_to_in_on", simulation_prefix, plot=plotLayers)
 
 
 # ------------ Measurements Section ----------------
@@ -239,5 +240,5 @@ for step in range(1, simulation_time, change_pattern_step):
     nest.Simulate(change_pattern_step)
 
 #recorder1.make_video(group_frames=True, play_it=False)
-recorder2.make_video(group_frames=True, play_it=False)
+recorder2.make_video(group_frames=True, play_it=True)
 #recorder3.make_video(group_frames=True, play_it=False)
