@@ -239,6 +239,9 @@ for step in range(1, simulation_time, change_pattern_step):
 
     nest.Simulate(change_pattern_step)
 
-#recorder1.make_video(group_frames=True, play_it=False)
-recorder2.make_video(group_frames=True, play_it=True)
-#recorder3.make_video(group_frames=True, play_it=False)
+
+play_it = False
+
+#recorder1.make_video(group_frames=True, play_it=play_it)
+recorder2.make_video(group_frames=True, play_it=play_it)
+#recorder3.make_video(group_frames=True, play_it=play_it)

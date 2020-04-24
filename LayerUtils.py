@@ -10,6 +10,7 @@ import glob
 from mpi4py import MPI
 import multiprocessing
 
+
 def take_poisson_layer_snapshot(layer, layer_name, simulation_prefix):
     layer_ids = nest.GetNodes(layer)
     layer_size = len(layer_ids[0])
@@ -42,7 +43,7 @@ class Recorder:
         nest.Connect(nest.GetLeaves(self.layer)[0], self.spike_detector)
 
         self.filename = label + '-' + str(self.spike_detector[0]) + '-*.gdf'
-        self.output_folder = self.filename.split('.gdf')[0] + '/'
+        self.output_folder = self.filename.split('-*.gdf')[0] + '/'
 
     # TODO create all in memory and read the file and make a +1 to the position.
     def make_video(self, group_frames=True, play_it=True):
@@ -52,7 +53,7 @@ class Recorder:
         print('This should be call after simulation.')
         data = pd.concat(
             [
-                pd.read_csv(f, '\t', header=None, usecols=[0, 1],names=['neuron', 'time'])
+                pd.read_csv(f, '\t', header=None, usecols=[0, 1], names=['neuron', 'time'])
                 for f in glob.glob(self.filename)
             ]
         )
@@ -86,8 +87,10 @@ class Recorder:
         comm.barrier()
 
         if rank == 0:
+            ffmpeg_command_line = 'ffmpeg -i ' + self.output_folder + '%d.png -vf "setpts=(1/3)*PTS"  -threads 4 ' + self.output_folder + '0video.webm'
+            print(ffmpeg_command_line)
             subprocess.call(
-                'ffmpeg -i ' + self.output_folder + '%d.png -vf "setpts=(1/3)*PTS"  -threads 4 ' + self.output_folder + '0video.webm',
+                ffmpeg_command_line,
                 shell=True
             )
 
@@ -101,11 +104,10 @@ class Recorder:
 
         if step in grouped.groups:
             for row, data in grouped.get_group(step).iterrows():
-                # print(int(data.neuron))
                 neuron = int(data.neuron)
                 image_frame_dict[neuron] = 1
         else:
-            print('nothing')
+            print('There is not spikes in this frame')
 
         image_frame_array = [value for key, value in image_frame_dict.items()]
         square = np.reshape(image_frame_array, (-1, int(self.layer_size ** (1 / 2.0))))
