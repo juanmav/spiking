@@ -87,7 +87,7 @@ class Recorder:
         comm.barrier()
 
         if rank == 0:
-            ffmpeg_command_line = 'ffmpeg -i ' + self.output_folder + '%d.png -vf "setpts=(1/3)*PTS"  -threads 4 ' + self.output_folder + '0video.webm'
+            ffmpeg_command_line = 'ffmpeg -i ' + self.output_folder + '%d.png -vf "setpts=(1/3)*PTS"  -threads 4 ' + self.output_folder + '0video.mp4'
             print(ffmpeg_command_line)
             subprocess.call(
                 ffmpeg_command_line,
@@ -95,7 +95,7 @@ class Recorder:
             )
 
             if play_it:
-                subprocess.call('xdg-open ' + self.output_folder + '0video.webm', shell=True)
+                subprocess.call('xdg-open ' + self.output_folder + '0video.mp4', shell=True)
 
     def process_image(self, parameters):
         [step, ids, array, grouped] = parameters
