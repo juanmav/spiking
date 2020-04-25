@@ -2,16 +2,16 @@ import nest
 import nest.topology as topology
 import numpy as np
 from math import sqrt, ceil
-import time
 from LayerUtils import take_poisson_layer_snapshot, Recorder, connect_and_plot_layers_with_projection
 from RetinaUtils import image_array_to_retina, array_from_image
+from Utils import get_simulation_prefix
 
 nest.ResetKernel()
-nest.SetKernelStatus({"local_num_threads": 2})
+nest.SetKernelStatus({"local_num_threads": 1})
 
 simulation_time = 250
 change_pattern_step = 250
-simulation_prefix = time.strftime("%Y%m%d-%H-%M-%S")
+simulation_prefix = get_simulation_prefix()
 
 # This must represent the height and width of the input image.
 RECEPTIVE_FIELD_WIDTH = 99

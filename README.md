@@ -36,7 +36,7 @@ git clone https://github.com/juanmav/spiking.git
 cd spiking
 apt-get install libgl1-mesa-glx libegl1-mesa libxrandr2 libxrandr2 libxss1 libxcursor1 libxcomposite1 libasound2 libxi6 libxtst6 libopenblas-dev
 conda create -n spiking python=3.6
-conda install -c conda-forge joblib ffmpeg pypng nest-simulator=*=mpi_openmpi* jupyterlab matplotlib pillow
+conda install -c conda-forge ffmpeg pypng nest-simulator=*=mpi_openmpi* jupyterlab matplotlib pillow
 # for local development install nest without openmpi
 conda install -c conda-forge nest-simulator
 python testPlot.py
