@@ -9,6 +9,7 @@ from Utils import get_simulation_prefix
 import multiprocessing
 
 local_num_threads = 2
+connection_threads = False
 
 nest.ResetKernel()
 nest.SetKernelStatus({"local_num_threads": local_num_threads})
@@ -200,9 +201,14 @@ connections = [
     (in_off_center, in_on_center, conn_ii_dict, "16.in_off_to_in_on", simulation_prefix, plotLayers)
 ]
 
+
 # Process the connections.
-pool = multiprocessing.Pool(processes=int(local_num_threads / 2))
-pool.map(parallel_connect_and_plot_layers_with_projection, connections)
+if connection_threads:
+    pool = multiprocessing.Pool(processes=int(local_num_threads / 2))
+    pool.map(parallel_connect_and_plot_layers_with_projection, connections)
+else:
+    for connection in connections:
+        parallel_connect_and_plot_layers_with_projection(connection)
 
 # ------------ Measurements Section ----------------
 #recorder1 = Recorder(parrot_retina_on, 'parrot_retina_on', simulation_prefix, simulation_time)
