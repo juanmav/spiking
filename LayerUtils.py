@@ -155,3 +155,9 @@ def connect_and_plot_layers_with_projection(origin, target, projection, filename
         folder = './output/' + simulation_prefix + '/layer/'
         Path(folder).mkdir(parents=True, exist_ok=True)
         fig.savefig(folder + filename + '.png')
+
+
+def parallel_connect_and_plot_layers_with_projection(parameters):
+    [origin, target, projection, filename, simulation_prefix, plot] = parameters
+    connect_and_plot_layers_with_projection(origin, target, projection, filename, simulation_prefix, plot=plot)
+
