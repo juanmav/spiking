@@ -117,6 +117,7 @@ class Recorder:
 
 
 def connect_and_plot_layers_with_projection(origin, target, projection, filename, simulation_prefix, plot=True):
+    print(f"Connecting: {filename}")
     topology.ConnectLayers(origin, target, projection)
     if plot:
         fig, ax = plt.subplots()

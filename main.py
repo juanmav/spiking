@@ -201,7 +201,7 @@ connections = [
 ]
 
 # Process the connections.
-pool = multiprocessing.Pool(processes=local_num_threads)
+pool = multiprocessing.Pool(processes=int(local_num_threads / 2))
 pool.map(parallel_connect_and_plot_layers_with_projection, connections)
 
 # ------------ Measurements Section ----------------
