@@ -2,14 +2,11 @@ import nest
 import nest.topology as topology
 import numpy as np
 from math import sqrt, ceil
-from LayerUtils import take_poisson_layer_snapshot, Recorder, connect_and_plot_layers_with_projection, \
-    parallel_connect_and_plot_layers_with_projection
-from RetinaUtils import image_array_to_retina, array_from_image
+from LayerUtils import take_poisson_layer_snapshot, Recorder, tuple_connect_and_plot_layers_with_projection
+from RetinaUtils import image_array_to_retina
 from Utils import get_simulation_prefix
-import multiprocessing
 
-local_num_threads = 2
-connection_threads = False
+local_num_threads = 1
 
 nest.ResetKernel()
 nest.SetKernelStatus({"local_num_threads": local_num_threads})
@@ -24,7 +21,7 @@ RECEPTIVE_FIELD_HEIGHT = 99
 
 # Total neuros per combined layer, Excitatory plus Inhibitory neurons.
 # Distribution is usually 1 inhibitory, 4 excitatory
-TOTAL_NEUROS_PER_COMBINED_LAYER = 1000
+TOTAL_NEUROS_PER_COMBINED_LAYER = 10000
 TOTAL_EXCITATORY = TOTAL_NEUROS_PER_COMBINED_LAYER * 0.8
 TOTAL_INHIBITORY = TOTAL_NEUROS_PER_COMBINED_LAYER * 0.2
 # Square layer proportional to the amount.
@@ -202,13 +199,8 @@ connections = [
 ]
 
 
-# Process the connections.
-if connection_threads:
-    pool = multiprocessing.Pool(processes=int(local_num_threads / 2))
-    pool.map(parallel_connect_and_plot_layers_with_projection, connections)
-else:
-    for connection in connections:
-        parallel_connect_and_plot_layers_with_projection(connection)
+for connection in connections:
+    tuple_connect_and_plot_layers_with_projection(connection)
 
 # ------------ Measurements Section ----------------
 #recorder1 = Recorder(parrot_retina_on, 'parrot_retina_on', simulation_prefix, simulation_time)
