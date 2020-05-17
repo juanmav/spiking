@@ -57,6 +57,9 @@ class Recorder:
                 for f in glob.glob(self.filename)
             ]
         )
+        # TODO check with there are nulls spikes or/and file concat
+        data = data.dropna()
+
         if group_frames:
             frames = self.simulation_time
             data['time'] = data['time'].astype(int)
