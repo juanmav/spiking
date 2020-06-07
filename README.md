@@ -40,6 +40,8 @@ conda install -c conda-forge ffmpeg pypng nest-simulator=*=mpi_openmpi* jupyterl
 # for local development install nest without openmpi
 conda install -c conda-forge nest-simulator
 python testPlot.py
+
+conda install -c conda-forge python-dotenv
 ```
 
 The last command should create two images (test0.png and test1.png) if it
@@ -68,3 +70,5 @@ You can check results on the `./output` folder.
 - Make parameters logs for each run. (connections, frequencies, array size, etc etc).
 - Document `./output` folder layout.
 
+
+https://en.wikipedia.org/wiki/Cortical_spreading_depression

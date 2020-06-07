@@ -1,3 +1,4 @@
+import os
 import nest
 import nest.topology as topology
 import numpy as np
@@ -5,25 +6,32 @@ from math import sqrt, ceil
 from LayerUtils import take_poisson_layer_snapshot, Recorder, tuple_connect_and_plot_layers_with_projection
 from RetinaUtils import image_array_to_retina
 from Utils import get_simulation_prefix
+import pandas as pd
+from dotenv import load_dotenv
+load_dotenv()
 
-local_num_threads = 1
+local_num_threads = int(os.getenv("LOCAL_NUM_THREADS", 1))
 
 nest.ResetKernel()
 nest.SetKernelStatus({"local_num_threads": local_num_threads})
 
-simulation_time = 250
-change_pattern_step = 250
+simulation_time = int(os.getenv("SIMULATION_TIME", 250))
+change_pattern_step = int(os.getenv("CHANGE_PATTERN_STEP", 250))
 simulation_prefix = get_simulation_prefix()
 
 # This must represent the height and width of the input image.
 RECEPTIVE_FIELD_WIDTH = 99
 RECEPTIVE_FIELD_HEIGHT = 99
 
+HYPER_COLUMNS = 1
+WIDTH_HYPER_COLUMN = 10
+HEIGHT_HYPER_COLUMN = 10
+
 # Total neuros per combined layer, Excitatory plus Inhibitory neurons.
 # Distribution is usually 1 inhibitory, 4 excitatory
-TOTAL_NEUROS_PER_COMBINED_LAYER = 10000
-TOTAL_EXCITATORY = TOTAL_NEUROS_PER_COMBINED_LAYER * 0.8
-TOTAL_INHIBITORY = TOTAL_NEUROS_PER_COMBINED_LAYER * 0.2
+TOTAL_NEUROS_PER_COMBINED_LAYER = int(os.getenv("TOTAL_NEUROS_PER_COMBINED_LAYER", 2000))
+TOTAL_EXCITATORY = TOTAL_NEUROS_PER_COMBINED_LAYER * float(os.getenv("EXCITATORY_PROP", 0.8))
+TOTAL_INHIBITORY = TOTAL_NEUROS_PER_COMBINED_LAYER * float(os.getenv("INHIBITORY_PROP", 0.2))
 # Square layer proportional to the amount.
 EX_V1_WIDTH_AND_HEIGHT = ceil(sqrt(TOTAL_EXCITATORY))
 IN_V1_WIDTH_AND_HEIGHT = ceil(sqrt(TOTAL_INHIBITORY))
@@ -66,7 +74,7 @@ layer_inhibitory_dict = {
 # Layer projections
 # Retina => Parrot layer
 conn_retina_parrot_dict = {
-    "connection_type": "divergent",
+    "connection_type": "convergent",
     "mask": {
         "circular": {
             "radius": 0.025
@@ -76,7 +84,7 @@ conn_retina_parrot_dict = {
 
 # Parrot layer => V1
 conn_parrot_v1_dict = {
-    "connection_type": "divergent",
+    "connection_type": "convergent",
     "mask": {
         "circular": {
             "radius": 0.1
@@ -93,7 +101,7 @@ conn_parrot_v1_dict = {
 
 # V1 interconnections
 conn_ee_dict = {
-    "connection_type": "divergent",
+    "connection_type": "convergent",
     "mask": {
         "circular": {
             "radius": 0.1
@@ -109,23 +117,23 @@ conn_ee_dict = {
 }
 
 conn_ei_dict = {
-    "connection_type": "divergent",
+    "connection_type": "convergent",
     "mask": {
         "circular": {
-            "radius": 0.1 # incrementar la "ventana"
+            "radius": 0.1
         }
     },
     'kernel': {
         'gaussian': {
             'p_center': 1.0,
-            'sigma': 0.15 #2 a 2.5 sigmas, para aumentar la prob de conexion y no 3 por performance.
+            'sigma': 0.15
         }
     },
     "weights": 0.1
 }
 
-conn_ii_dict = {
-    "connection_type": "divergent",
+conn_ie_dict = {
+    "connection_type": "convergent",
     "mask": {
         "circular": {
             "radius": 0.1
@@ -140,8 +148,8 @@ conn_ii_dict = {
     "weights": -0.5
 }
 
-conn_ie_dict = {
-    "connection_type": "divergent",
+conn_ii_dict = {
+    "connection_type": "convergent",
     "mask": {
         "circular": {
             "radius": 0.1
@@ -155,6 +163,36 @@ conn_ie_dict = {
     },
     "weights": -0.5
 }
+
+# Log parameters.
+
+layers = pd.DataFrame.from_dict(
+    [
+        {**{"name": "full_retina_dict"}, **full_retina_dict},
+        {**{"name": "parrot_layer_dict"}, **parrot_layer_dict},
+        {**{"name": "layer_excitatory_dict"}, **layer_excitatory_dict},
+        {**{"name": "layer_inhibitory_dict"}, **layer_inhibitory_dict}
+    ]
+)
+projections = pd.DataFrame.from_dict(
+    [
+        {**{"name": "conn_retina_parrot_dict"}, **conn_retina_parrot_dict},
+        {**{"name": "conn_parrot_v1_dict"}, **conn_parrot_v1_dict},
+        {**{"name": "conn_ee_dict"}, **conn_ee_dict},
+        {**{"name": "conn_ei_dict"}, **conn_ei_dict},
+        {**{"name": "conn_ie_dict"}, **conn_ie_dict},
+        {**{"name": "conn_ee_dict"}, **conn_ee_dict}
+    ]
+)
+
+print("Env Settings")
+print(open('.env').read())
+print("Layer definitions")
+print(layers)
+print("Projection definition")
+print(projections)
+
+# TODO copy env file.
 
 # Retina, LGN.
 full_retina_on = topology.CreateLayer(full_retina_dict)
@@ -170,7 +208,7 @@ in_on_center = topology.CreateLayer(layer_inhibitory_dict)
 ex_off_center = topology.CreateLayer(layer_excitatory_dict)
 in_off_center = topology.CreateLayer(layer_inhibitory_dict)
 
-plotLayers = False
+plotLayers = os.getenv("PLOT_LAYERS", "False") == "True"
 # Connections
 connections = [
     # Receptive field to parrot
@@ -221,27 +259,29 @@ total_time = 0
 flip_flop = True
 pattern = image_array_0
 
-for step in range(1, simulation_time, change_pattern_step):
-    total_time = + step
-    print("Total simulation time:" + str(total_time))
+simulate = os.getenv("SIMULATE", "True") == "True"
 
-    if flip_flop:
-        pattern = image_array_0
-        flip_flop = not flip_flop
-    else:
-        pattern = image_array_1
-        flip_flop = not flip_flop
+if simulate:
+    for step in range(1, simulation_time, change_pattern_step):
+        total_time = + step
+        print("Total simulation time:" + str(total_time))
 
-    image_array_to_retina(pattern, full_retina_on, 'on')
-    image_array_to_retina(pattern, full_retina_off, 'off')
-    take_poisson_layer_snapshot(full_retina_on, str(step)+"-full_retina_on", simulation_prefix)
-    take_poisson_layer_snapshot(full_retina_off, str(step)+"-full_retina_off", simulation_prefix)
+        if flip_flop:
+            pattern = image_array_0
+            flip_flop = not flip_flop
+        else:
+            pattern = image_array_1
+            flip_flop = not flip_flop
 
-    nest.Simulate(change_pattern_step)
+        image_array_to_retina(pattern, full_retina_on, 'on')
+        image_array_to_retina(pattern, full_retina_off, 'off')
+        take_poisson_layer_snapshot(full_retina_on, str(step)+"-full_retina_on", simulation_prefix)
+        take_poisson_layer_snapshot(full_retina_off, str(step)+"-full_retina_off", simulation_prefix)
 
+        nest.Simulate(change_pattern_step)
 
-play_it = False
+    play_it = os.getenv("PLAY_IT", "False") == "True"
 
-#recorder1.make_video(group_frames=True, play_it=play_it)
-recorder2.make_video(group_frames=True, play_it=play_it)
-#recorder3.make_video(group_frames=True, play_it=play_it)
+    # recorder1.make_video(group_frames=True, play_it=play_it)
+    recorder2.make_video(group_frames=True, play_it=play_it)
+    # recorder3.make_video(group_frames=True, play_it=play_it)
