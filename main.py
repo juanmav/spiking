@@ -19,23 +19,26 @@ simulation_time = int(os.getenv("SIMULATION_TIME", 250))
 change_pattern_step = int(os.getenv("CHANGE_PATTERN_STEP", 250))
 simulation_prefix = get_simulation_prefix()
 
-# This must represent the height and width of the input image.
-RECEPTIVE_FIELD_WIDTH = 99
-RECEPTIVE_FIELD_HEIGHT = 99
-
 HYPER_COLUMNS = 1
-WIDTH_HYPER_COLUMN = 10
-HEIGHT_HYPER_COLUMN = 10
+WIDTH_HEIGHT_HYPER_COLUMN = 10
+SPATIAL_WIDTH_AND_HEIGHT = 1.0 * HYPER_COLUMNS
+
+# This must represent the height and width of the input image.
+RECEPTIVE_FIELD_WIDTH = 33 * HYPER_COLUMNS
+RECEPTIVE_FIELD_HEIGHT = 33 * HYPER_COLUMNS
 
 # Total neuros per combined layer, Excitatory plus Inhibitory neurons.
 # Distribution is usually 1 inhibitory, 4 excitatory
-TOTAL_NEUROS_PER_COMBINED_LAYER = int(os.getenv("TOTAL_NEUROS_PER_COMBINED_LAYER", 2000))
-TOTAL_EXCITATORY = TOTAL_NEUROS_PER_COMBINED_LAYER * float(os.getenv("EXCITATORY_PROP", 0.8))
-TOTAL_INHIBITORY = TOTAL_NEUROS_PER_COMBINED_LAYER * float(os.getenv("INHIBITORY_PROP", 0.2))
+TOTAL_NEURONS_PER_COMBINED_COLUMN_LAYER = int(os.getenv("TOTAL_NEURONS_PER_COMBINED_COLUMN_LAYER", 100))
+TOTAL_NEURONS_COUNT = HYPER_COLUMNS * WIDTH_HEIGHT_HYPER_COLUMN**2 * TOTAL_NEURONS_PER_COMBINED_COLUMN_LAYER
+TOTAL_EXCITATORY = TOTAL_NEURONS_COUNT * float(os.getenv("EXCITATORY_PROP", 0.8))
+TOTAL_INHIBITORY = TOTAL_NEURONS_COUNT * float(os.getenv("INHIBITORY_PROP", 0.2))
 # Square layer proportional to the amount.
 EX_V1_WIDTH_AND_HEIGHT = ceil(sqrt(TOTAL_EXCITATORY))
 IN_V1_WIDTH_AND_HEIGHT = ceil(sqrt(TOTAL_INHIBITORY))
 
+print("EX_V1_WIDTH_AND_HEIGHT = " + str(EX_V1_WIDTH_AND_HEIGHT))
+print("IN_V1_WIDTH_AND_HEIGHT = " + str(IN_V1_WIDTH_AND_HEIGHT))
 #########################################################################################
 
 # Start Simulation from this point!
@@ -43,14 +46,14 @@ IN_V1_WIDTH_AND_HEIGHT = ceil(sqrt(TOTAL_INHIBITORY))
 # hard code steps below
 
 full_retina_dict = {
-    "extent": [1.1, 1.1],
+    "extent": [SPATIAL_WIDTH_AND_HEIGHT, SPATIAL_WIDTH_AND_HEIGHT],
     "rows": RECEPTIVE_FIELD_WIDTH,
     "columns": RECEPTIVE_FIELD_HEIGHT,
     "elements": "poisson_generator"
 }
 
 parrot_layer_dict = {
-    "extent": [1.1, 1.1],
+    "extent": [SPATIAL_WIDTH_AND_HEIGHT, SPATIAL_WIDTH_AND_HEIGHT],
     "rows": RECEPTIVE_FIELD_WIDTH * 2,
     "columns": RECEPTIVE_FIELD_HEIGHT * 2,
     "elements": "parrot_neuron"
@@ -58,14 +61,14 @@ parrot_layer_dict = {
 
 # Layer definitions
 layer_excitatory_dict = {
-    "extent": [1.1, 1.1],
+    "extent": [SPATIAL_WIDTH_AND_HEIGHT, SPATIAL_WIDTH_AND_HEIGHT],
     "rows": EX_V1_WIDTH_AND_HEIGHT,
     "columns": EX_V1_WIDTH_AND_HEIGHT,
     "elements": "iaf_psc_alpha"
 }
 
 layer_inhibitory_dict = {
-    "extent": [1.1, 1.1],
+    "extent": [SPATIAL_WIDTH_AND_HEIGHT, SPATIAL_WIDTH_AND_HEIGHT],
     "rows": IN_V1_WIDTH_AND_HEIGHT,
     "columns": IN_V1_WIDTH_AND_HEIGHT,
     "elements": "iaf_psc_alpha"
