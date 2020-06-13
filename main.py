@@ -19,8 +19,8 @@ simulation_time = int(os.getenv("SIMULATION_TIME", 250))
 change_pattern_step = int(os.getenv("CHANGE_PATTERN_STEP", 250))
 simulation_prefix = get_simulation_prefix()
 
-HYPER_COLUMNS = 1
-WIDTH_HEIGHT_HYPER_COLUMN = 10
+HYPER_COLUMNS = int(os.getenv("HYPER_COLUMNS", 1))
+WIDTH_HEIGHT_HYPER_COLUMN = int(os.getenv("WIDTH_HEIGHT_HYPER_COLUMN", 10))
 SPATIAL_WIDTH_AND_HEIGHT = 1.0 * HYPER_COLUMNS
 
 # This must represent the height and width of the input image.
