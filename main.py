@@ -23,14 +23,10 @@ HYPER_COLUMNS = int(os.getenv("HYPER_COLUMNS", 1))
 WIDTH_HEIGHT_HYPER_COLUMN = int(os.getenv("WIDTH_HEIGHT_HYPER_COLUMN", 10))
 SPATIAL_WIDTH_AND_HEIGHT = 1.0 * HYPER_COLUMNS
 
-# This must represent the height and width of the input image.
-RECEPTIVE_FIELD_WIDTH = 33 * HYPER_COLUMNS
-RECEPTIVE_FIELD_HEIGHT = 33 * HYPER_COLUMNS
-
 # Total neuros per combined layer, Excitatory plus Inhibitory neurons.
 # Distribution is usually 1 inhibitory, 4 excitatory
-TOTAL_NEURONS_PER_COMBINED_COLUMN_LAYER = int(os.getenv("TOTAL_NEURONS_PER_COMBINED_COLUMN_LAYER", 100))
-TOTAL_NEURONS_COUNT = HYPER_COLUMNS * WIDTH_HEIGHT_HYPER_COLUMN**2 * TOTAL_NEURONS_PER_COMBINED_COLUMN_LAYER
+TOTAL_NEURONS_PER_COMBINED_HYPER_COLUMN_LAYER = int(os.getenv("TOTAL_NEURONS_PER_COMBINED_HYPER_COLUMN_LAYER", 30))
+TOTAL_NEURONS_COUNT = HYPER_COLUMNS * WIDTH_HEIGHT_HYPER_COLUMN ** 2 * TOTAL_NEURONS_PER_COMBINED_HYPER_COLUMN_LAYER
 TOTAL_EXCITATORY = TOTAL_NEURONS_COUNT * float(os.getenv("EXCITATORY_PROP", 0.8))
 TOTAL_INHIBITORY = TOTAL_NEURONS_COUNT * float(os.getenv("INHIBITORY_PROP", 0.2))
 # Square layer proportional to the amount.
@@ -39,6 +35,10 @@ IN_V1_WIDTH_AND_HEIGHT = ceil(sqrt(TOTAL_INHIBITORY))
 
 print("EX_V1_WIDTH_AND_HEIGHT = " + str(EX_V1_WIDTH_AND_HEIGHT))
 print("IN_V1_WIDTH_AND_HEIGHT = " + str(IN_V1_WIDTH_AND_HEIGHT))
+
+# Receptive field size TODO check this.
+RECEPTIVE_FIELD_HEIGHT_WIDTH = 3 * HYPER_COLUMNS
+
 #########################################################################################
 
 # Start Simulation from this point!
@@ -47,15 +47,15 @@ print("IN_V1_WIDTH_AND_HEIGHT = " + str(IN_V1_WIDTH_AND_HEIGHT))
 
 full_retina_dict = {
     "extent": [SPATIAL_WIDTH_AND_HEIGHT, SPATIAL_WIDTH_AND_HEIGHT],
-    "rows": RECEPTIVE_FIELD_WIDTH,
-    "columns": RECEPTIVE_FIELD_HEIGHT,
+    "rows": RECEPTIVE_FIELD_HEIGHT_WIDTH,
+    "columns": RECEPTIVE_FIELD_HEIGHT_WIDTH,
     "elements": "poisson_generator"
 }
 
 parrot_layer_dict = {
     "extent": [SPATIAL_WIDTH_AND_HEIGHT, SPATIAL_WIDTH_AND_HEIGHT],
-    "rows": RECEPTIVE_FIELD_WIDTH * 2,
-    "columns": RECEPTIVE_FIELD_HEIGHT * 2,
+    "rows": RECEPTIVE_FIELD_HEIGHT_WIDTH,
+    "columns": RECEPTIVE_FIELD_HEIGHT_WIDTH,
     "elements": "parrot_neuron"
 }
 
@@ -254,9 +254,12 @@ recorder2 = Recorder(ex_on_center, 'ex_on_center', simulation_prefix, simulation
 # image_array_1 = np.divide(array_from_image("./images/pattern1.png"), 255)
 
 # Patterns from numpy
-size = int(RECEPTIVE_FIELD_WIDTH / 3)
+size = int(HYPER_COLUMNS)
 image_array_0 = np.pad(np.kron(np.array([[1, 0, 1], [0, 1, 0], [1, 0, 1]]), np.ones((size, size))), 1, mode='edge')
 image_array_1 = np.pad(np.kron(np.array([[0, 1, 0], [1, 0, 1], [0, 1, 0]]), np.ones((size, size))), 1, mode='edge')
+
+print('Image rows: ' + str(len(image_array_0)))
+print('Image columns: ' + str(len(image_array_0[0])))
 
 total_time = 0
 flip_flop = True
