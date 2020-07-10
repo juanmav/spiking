@@ -37,7 +37,7 @@ print("EX_V1_WIDTH_AND_HEIGHT = " + str(EX_V1_WIDTH_AND_HEIGHT))
 print("IN_V1_WIDTH_AND_HEIGHT = " + str(IN_V1_WIDTH_AND_HEIGHT))
 
 # Receptive field size TODO check this.
-RECEPTIVE_FIELD_HEIGHT_WIDTH = 3 * HYPER_COLUMNS
+RECEPTIVE_FIELD_HEIGHT_WIDTH = int(os.getenv("RECEPTIVE_FIELD_DENSITY", 1)) * 3 * HYPER_COLUMNS
 
 #########################################################################################
 
@@ -90,7 +90,7 @@ conn_parrot_v1_dict = {
     "connection_type": "convergent",
     "mask": {
         "circular": {
-            "radius": 0.1
+            "radius": 1.0
         }
     },
     'kernel': {
@@ -107,7 +107,7 @@ conn_ee_dict = {
     "connection_type": "convergent",
     "mask": {
         "circular": {
-            "radius": 0.1
+            "radius": 1.0
         }
     },
     'kernel': {
@@ -123,7 +123,7 @@ conn_ei_dict = {
     "connection_type": "convergent",
     "mask": {
         "circular": {
-            "radius": 0.1
+            "radius": 1.0
         }
     },
     'kernel': {
@@ -139,7 +139,7 @@ conn_ie_dict = {
     "connection_type": "convergent",
     "mask": {
         "circular": {
-            "radius": 0.1
+            "radius": 1.0
         }
     },
     'kernel': {
@@ -155,7 +155,7 @@ conn_ii_dict = {
     "connection_type": "convergent",
     "mask": {
         "circular": {
-            "radius": 0.1
+            "radius": 1.0
         }
     },
     'kernel': {
@@ -224,19 +224,19 @@ connections = [
     (parrot_retina_off, in_off_center, conn_parrot_v1_dict, "6.parrot_to_in_off", simulation_prefix, plotLayers),
     # Lateral connection V1
     # ON <==> ON
-    (ex_on_center, ex_on_center, conn_ee_dict, "7.ex_on_to_ex_on", simulation_prefix, plotLayers),
-    (ex_on_center, in_on_center, conn_ei_dict, "8.ex_on_to_in_on", simulation_prefix, plotLayers),
-    (in_on_center, ex_on_center, conn_ei_dict, "9.in_on_to_ex_on", simulation_prefix, plotLayers),
-    # OFF <==> OFF
-    (ex_off_center, ex_off_center, conn_ee_dict, "10.ex_off_to_ex_off", simulation_prefix, plotLayers),
-    (ex_off_center, in_off_center, conn_ei_dict, "11.ex_off_to_in_on", simulation_prefix, plotLayers),
-    (in_off_center, ex_off_center, conn_ie_dict, "12.in_off_to_ex_off", simulation_prefix, plotLayers),
-    # INH_ON ==> OFF
-    (in_on_center, ex_off_center, conn_ie_dict, "13.in_on_to_ex_off", simulation_prefix, plotLayers),
-    (in_on_center, in_off_center, conn_ii_dict, "14.in_on_to_in_off", simulation_prefix, plotLayers),
-    # INH_OFF => ON
-    (in_off_center, ex_on_center, conn_ie_dict, "15.in_off_to_ex_on", simulation_prefix, plotLayers),
-    (in_off_center, in_on_center, conn_ii_dict, "16.in_off_to_in_on", simulation_prefix, plotLayers)
+    #(ex_on_center, ex_on_center, conn_ee_dict, "7.ex_on_to_ex_on", simulation_prefix, plotLayers),
+    #(ex_on_center, in_on_center, conn_ei_dict, "8.ex_on_to_in_on", simulation_prefix, plotLayers),
+    #(in_on_center, ex_on_center, conn_ei_dict, "9.in_on_to_ex_on", simulation_prefix, plotLayers),
+    ## OFF <==> OFF
+    #(ex_off_center, ex_off_center, conn_ee_dict, "10.ex_off_to_ex_off", simulation_prefix, plotLayers),
+    #(ex_off_center, in_off_center, conn_ei_dict, "11.ex_off_to_in_on", simulation_prefix, plotLayers),
+    #(in_off_center, ex_off_center, conn_ie_dict, "12.in_off_to_ex_off", simulation_prefix, plotLayers),
+    ## INH_ON ==> OFF
+    #(in_on_center, ex_off_center, conn_ie_dict, "13.in_on_to_ex_off", simulation_prefix, plotLayers),
+    #(in_on_center, in_off_center, conn_ii_dict, "14.in_on_to_in_off", simulation_prefix, plotLayers),
+    ## INH_OFF => ON
+    #(in_off_center, ex_on_center, conn_ie_dict, "15.in_off_to_ex_on", simulation_prefix, plotLayers),
+    #(in_off_center, in_on_center, conn_ii_dict, "16.in_off_to_in_on", simulation_prefix, plotLayers)
 ]
 
 
@@ -244,9 +244,13 @@ for connection in connections:
     tuple_connect_and_plot_layers_with_projection(connection)
 
 # ------------ Measurements Section ----------------
-#recorder1 = Recorder(parrot_retina_on, 'parrot_retina_on', simulation_prefix, simulation_time)
-recorder2 = Recorder(ex_on_center, 'ex_on_center', simulation_prefix, simulation_time)
-#recorder3 = Recorder(ex_off_center, 'ex_off_center', simulation_prefix, simulation_time)
+recorder1 = Recorder(parrot_retina_on, 'parrot_retina_on', simulation_prefix, simulation_time)
+recorder2 = Recorder(parrot_retina_off, 'parrot_retina_off', simulation_prefix, simulation_time)
+recorder3 = Recorder(ex_on_center, 'ex_on_center', simulation_prefix, simulation_time)
+recorder4 = Recorder(ex_off_center, 'ex_off_center', simulation_prefix, simulation_time)
+recorder5 = Recorder(in_on_center, 'in_on_center', simulation_prefix, simulation_time)
+recorder6 = Recorder(in_off_center, 'in_off_center', simulation_prefix, simulation_time)
+
 # --------------------------------------------------
 
 # Patterns from Image
@@ -254,7 +258,7 @@ recorder2 = Recorder(ex_on_center, 'ex_on_center', simulation_prefix, simulation
 # image_array_1 = np.divide(array_from_image("./images/pattern1.png"), 255)
 
 # Patterns from numpy
-size = int(HYPER_COLUMNS)
+size = int(HYPER_COLUMNS * int(os.getenv("RECEPTIVE_FIELD_DENSITY", 1)))
 image_array_0 = np.pad(np.kron(np.array([[1, 0, 1], [0, 1, 0], [1, 0, 1]]), np.ones((size, size))), 1, mode='edge')
 image_array_1 = np.pad(np.kron(np.array([[0, 1, 0], [1, 0, 1], [0, 1, 0]]), np.ones((size, size))), 1, mode='edge')
 
@@ -288,6 +292,9 @@ if simulate:
 
     play_it = os.getenv("PLAY_IT", "False") == "True"
 
-    # recorder1.make_video(group_frames=True, play_it=play_it)
+    recorder1.make_video(group_frames=True, play_it=play_it)
     recorder2.make_video(group_frames=True, play_it=play_it)
-    # recorder3.make_video(group_frames=True, play_it=play_it)
+    recorder3.make_video(group_frames=True, play_it=play_it)
+    recorder4.make_video(group_frames=True, play_it=play_it)
+    recorder5.make_video(group_frames=True, play_it=play_it)
+    recorder6.make_video(group_frames=True, play_it=play_it)
