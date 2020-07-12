@@ -79,8 +79,9 @@ layer_inhibitory_dict = {
 conn_retina_parrot_dict = {
     "connection_type": "convergent",
     "mask": {
-        "circular": {
-            "radius": 0.025
+        "grid": {
+            "rows": 1,
+            "columns": 1
         }
     }
 }
@@ -90,18 +91,19 @@ conn_parrot_v1_dict = {
     "connection_type": "convergent",
     "mask": {
         "circular": {
-            "radius": 1.0
+            "radius": 0.1
         }
     },
     'kernel': {
         'gaussian': {
             'p_center': 1.0,
-            'sigma': 0.15
+            'sigma': 1.15
         }
     },
-    "weights": 0.5
+    "weights": 20.0
 }
 
+# p(d) = c + ad
 # V1 interconnections
 conn_ee_dict = {
     "connection_type": "convergent",
@@ -116,7 +118,8 @@ conn_ee_dict = {
             'sigma': 0.15
         }
     },
-    "weights": 0.1
+    "weights": 10.0,
+    "delays" : { "linear" : { "c": 0.1 , "a" : 0.2 } }
 }
 
 conn_ei_dict = {
@@ -132,7 +135,8 @@ conn_ei_dict = {
             'sigma': 0.15
         }
     },
-    "weights": 0.1
+    "weights": 10.0,
+    "delays" : { "linear" : { "c": 0.1 , "a" : 0.2 } } 
 }
 
 conn_ie_dict = {
@@ -148,7 +152,8 @@ conn_ie_dict = {
             'sigma': 0.15
         }
     },
-    "weights": -0.5
+    "weights": -5.0,
+    "delays" : { "linear" : { "c": 0.1 , "a" : 0.2 } } 
 }
 
 conn_ii_dict = {
@@ -164,7 +169,8 @@ conn_ii_dict = {
             'sigma': 0.15
         }
     },
-    "weights": -0.5
+    "weights": -5.0,
+    "delays" : { "linear" : { "c": 0.1 , "a" : 0.2 } } 
 }
 
 # Log parameters.
@@ -191,9 +197,9 @@ projections = pd.DataFrame.from_dict(
 print("Env Settings")
 print(open('.env').read())
 print("Layer definitions")
-print(layers)
+print(layers.to_string())
 print("Projection definition")
-print(projections)
+print(projections.to_string())
 
 # TODO copy env file.
 
@@ -224,19 +230,19 @@ connections = [
     (parrot_retina_off, in_off_center, conn_parrot_v1_dict, "6.parrot_to_in_off", simulation_prefix, plotLayers),
     # Lateral connection V1
     # ON <==> ON
-    #(ex_on_center, ex_on_center, conn_ee_dict, "7.ex_on_to_ex_on", simulation_prefix, plotLayers),
-    #(ex_on_center, in_on_center, conn_ei_dict, "8.ex_on_to_in_on", simulation_prefix, plotLayers),
-    #(in_on_center, ex_on_center, conn_ei_dict, "9.in_on_to_ex_on", simulation_prefix, plotLayers),
+    (ex_on_center, ex_on_center, conn_ee_dict, "7.ex_on_to_ex_on", simulation_prefix, plotLayers),
+    (ex_on_center, in_on_center, conn_ei_dict, "8.ex_on_to_in_on", simulation_prefix, plotLayers),
+    (in_on_center, ex_on_center, conn_ei_dict, "9.in_on_to_ex_on", simulation_prefix, plotLayers),
     ## OFF <==> OFF
-    #(ex_off_center, ex_off_center, conn_ee_dict, "10.ex_off_to_ex_off", simulation_prefix, plotLayers),
-    #(ex_off_center, in_off_center, conn_ei_dict, "11.ex_off_to_in_on", simulation_prefix, plotLayers),
-    #(in_off_center, ex_off_center, conn_ie_dict, "12.in_off_to_ex_off", simulation_prefix, plotLayers),
+    (ex_off_center, ex_off_center, conn_ee_dict, "10.ex_off_to_ex_off", simulation_prefix, plotLayers),
+    (ex_off_center, in_off_center, conn_ei_dict, "11.ex_off_to_in_on", simulation_prefix, plotLayers),
+    (in_off_center, ex_off_center, conn_ie_dict, "12.in_off_to_ex_off", simulation_prefix, plotLayers),
     ## INH_ON ==> OFF
-    #(in_on_center, ex_off_center, conn_ie_dict, "13.in_on_to_ex_off", simulation_prefix, plotLayers),
-    #(in_on_center, in_off_center, conn_ii_dict, "14.in_on_to_in_off", simulation_prefix, plotLayers),
+    (in_on_center, ex_off_center, conn_ie_dict, "13.in_on_to_ex_off", simulation_prefix, plotLayers),
+    (in_on_center, in_off_center, conn_ii_dict, "14.in_on_to_in_off", simulation_prefix, plotLayers),
     ## INH_OFF => ON
-    #(in_off_center, ex_on_center, conn_ie_dict, "15.in_off_to_ex_on", simulation_prefix, plotLayers),
-    #(in_off_center, in_on_center, conn_ii_dict, "16.in_off_to_in_on", simulation_prefix, plotLayers)
+    (in_off_center, ex_on_center, conn_ie_dict, "15.in_off_to_ex_on", simulation_prefix, plotLayers),
+    (in_off_center, in_on_center, conn_ii_dict, "16.in_off_to_in_on", simulation_prefix, plotLayers)
 ]
 
 
@@ -244,8 +250,8 @@ for connection in connections:
     tuple_connect_and_plot_layers_with_projection(connection)
 
 # ------------ Measurements Section ----------------
-recorder1 = Recorder(parrot_retina_on, 'parrot_retina_on', simulation_prefix, simulation_time)
-recorder2 = Recorder(parrot_retina_off, 'parrot_retina_off', simulation_prefix, simulation_time)
+#recorder1 = Recorder(parrot_retina_on, 'parrot_retina_on', simulation_prefix, simulation_time)
+#recorder2 = Recorder(parrot_retina_off, 'parrot_retina_off', simulation_prefix, simulation_time)
 recorder3 = Recorder(ex_on_center, 'ex_on_center', simulation_prefix, simulation_time)
 recorder4 = Recorder(ex_off_center, 'ex_off_center', simulation_prefix, simulation_time)
 recorder5 = Recorder(in_on_center, 'in_on_center', simulation_prefix, simulation_time)
@@ -292,8 +298,8 @@ if simulate:
 
     play_it = os.getenv("PLAY_IT", "False") == "True"
 
-    recorder1.make_video(group_frames=True, play_it=play_it)
-    recorder2.make_video(group_frames=True, play_it=play_it)
+    #recorder1.make_video(group_frames=True, play_it=play_it)
+    #recorder2.make_video(group_frames=True, play_it=play_it)
     recorder3.make_video(group_frames=True, play_it=play_it)
     recorder4.make_video(group_frames=True, play_it=play_it)
     recorder5.make_video(group_frames=True, play_it=play_it)
