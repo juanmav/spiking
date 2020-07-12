@@ -4,6 +4,7 @@ import nest.topology as topology
 import numpy as np
 from math import sqrt, ceil
 from LayerUtils import take_poisson_layer_snapshot, Recorder, tuple_connect_and_plot_layers_with_projection
+from Patterns import get_pattern_0, get_pattern_1
 from RetinaUtils import image_array_to_retina
 from Utils import get_simulation_prefix
 import pandas as pd
@@ -37,7 +38,7 @@ print("EX_V1_WIDTH_AND_HEIGHT = " + str(EX_V1_WIDTH_AND_HEIGHT))
 print("IN_V1_WIDTH_AND_HEIGHT = " + str(IN_V1_WIDTH_AND_HEIGHT))
 
 # Receptive field size TODO check this.
-RECEPTIVE_FIELD_HEIGHT_WIDTH = int(os.getenv("RECEPTIVE_FIELD_DENSITY", 1)) * 3 * HYPER_COLUMNS
+RECEPTIVE_FIELD_HEIGHT_WIDTH = int(os.getenv("RECEPTIVE_FIELD_DENSITY", 1)) * 9 * HYPER_COLUMNS
 
 #########################################################################################
 
@@ -265,8 +266,8 @@ recorder6 = Recorder(in_off_center, 'in_off_center', simulation_prefix, simulati
 
 # Patterns from numpy
 size = int(HYPER_COLUMNS * int(os.getenv("RECEPTIVE_FIELD_DENSITY", 1)))
-image_array_0 = np.pad(np.kron(np.array([[1, 0, 1], [0, 1, 0], [1, 0, 1]]), np.ones((size, size))), 1, mode='edge')
-image_array_1 = np.pad(np.kron(np.array([[0, 1, 0], [1, 0, 1], [0, 1, 0]]), np.ones((size, size))), 1, mode='edge')
+image_array_0 = np.pad(np.kron(np.array(get_pattern_0()), np.ones((size, size))), 1, mode='edge')
+image_array_1 = np.pad(np.kron(np.array(get_pattern_1()), np.ones((size, size))), 1, mode='edge')
 
 print('Image rows: ' + str(len(image_array_0)))
 print('Image columns: ' + str(len(image_array_0[0])))
