@@ -90,7 +90,7 @@ class Recorder:
         comm.barrier()
 
         if rank == 0:
-            ffmpeg_command_line = 'ffmpeg -i ' + self.output_folder + '%d.png -vf "setpts=(1/3)*PTS"  -threads 4 ' + self.output_folder + '0video.mp4'
+            ffmpeg_command_line = 'ffmpeg -i ' + self.output_folder + '%d.png -vf "setpts=(1/1)*PTS"  -threads 16 ' + self.output_folder + '0video.mp4'
             print(ffmpeg_command_line)
             subprocess.call(
                 ffmpeg_command_line,

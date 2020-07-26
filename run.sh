@@ -24,5 +24,5 @@ echo OMPI_MCA_btl=$OMPI_MCA_btl
 #mpirun -np 1 -hostfile hostfile --prefix $CONDA_PREFIX -x NEST_MODULE_PATH=$NEST_MODULE_PATH -x NEST_DATA_DIR=$NEST_DATA_DIR -bind-to none -map-by slot --mca btl vader,self,tcp  python main.py
 
 
-mpirun -np 16 -hostfile hostfile --prefix $CONDA_PREFIX -x NEST_MODULE_PATH=$NEST_MODULE_PATH -x NEST_DATA_DIR=$NEST_DATA_DIR -bind-to none -map-by slot --mca pml ob1 --mca btl tcp,self --mca btl_tcp_if_include enp6s0f0 python main.py
+mpirun -np 68 -hostfile hostfile --prefix $CONDA_PREFIX -x NEST_MODULE_PATH=$NEST_MODULE_PATH -x NEST_DATA_DIR=$NEST_DATA_DIR -bind-to none -map-by slot --mca pml ob1 --mca btl tcp,self --mca btl_tcp_if_include enp6s0f0 python main.py
 
