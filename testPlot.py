@@ -10,7 +10,7 @@ import nest
 import nest.topology as topology
 
 nest.ResetKernel()
-
+nest.SetKernelStatus({"local_num_threads": 4, "print_time": True})
 layer = topology.CreateLayer({
     "extent": [1.1, 1.1],
     "rows": 9,
@@ -44,7 +44,9 @@ topology.ConnectLayers(layer1, layer, projection)
 fig = topology.PlotLayer(layer, nodesize=40, nodecolor='green')
 topology.PlotLayer(layer1, fig, nodesize=40, nodecolor='red')
 fig.savefig('test0')
+print('Saved test0 image')
 center = topology.FindCenterElement(layer1)
+print('got center')
 topology.PlotTargets(
     center,
     layer,
@@ -55,5 +57,5 @@ topology.PlotTargets(
     kernel_color='black',
     tgt_color='yellow'
 )
-
+print('Save test1 image')
 fig.savefig('test1')
