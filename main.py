@@ -7,7 +7,9 @@ from LayerUtils import take_poisson_layer_snapshot, Recorder, tuple_connect_and_
 from Patterns import get_pattern_0, get_pattern_1
 from RetinaUtils import image_array_to_retina
 from Utils import get_simulation_prefix
+from Projections import conn_ii_dict, conn_ee_dict, conn_ei_dict, conn_ie_dict, conn_parrot_v1_dict, conn_retina_parrot_dict
 import pandas as pd
+import subprocess
 from dotenv import load_dotenv
 load_dotenv()
 
@@ -23,7 +25,7 @@ simulation_prefix = get_simulation_prefix()
 HYPER_COLUMNS = int(os.getenv("HYPER_COLUMNS", 1))
 RECEPTIVE_FIELD_DENSITY = int(os.getenv("RECEPTIVE_FIELD_DENSITY", 1))
 WIDTH_HEIGHT_HYPER_COLUMN = int(os.getenv("WIDTH_HEIGHT_HYPER_COLUMN", 10))
-SPATIAL_WIDTH_AND_HEIGHT = 1.0 * round(sqrt(HYPER_COLUMNS),2)
+SPATIAL_WIDTH_AND_HEIGHT = 1.0 * round(sqrt(HYPER_COLUMNS), 2)
 
 # Total neuros per combined layer, Excitatory plus Inhibitory neurons.
 # Distribution is usually 1 inhibitory, 4 excitatory
@@ -78,130 +80,7 @@ layer_inhibitory_dict = {
     "elements": "iaf_psc_alpha"
 }
 
-# Layer projections
-# Retina => Parrot layer
-conn_retina_parrot_dict = {
-    "connection_type": "convergent",
-    "mask": {
-        "grid": {
-            "rows": 1,
-            "columns": 1
-        }
-    }
-}
-
-# Parrot layer => V1
-conn_parrot_v1_dict = {
-    "connection_type": "convergent",
-    "mask": {
-        "circular": {
-            "radius": 0.45
-        }
-    },
-    #'kernel': {
-    #    'gaussian': {
-    #        'p_center': 1.0,
-    #        'sigma': 0.15
-    #    }
-    #},
-    "weights": 5.0,
-    "delays": {
-        "linear": {
-            "c": 0.1,
-            "a": 0.2
-        }
-    }
-}
-
-# p(d) = c + ad
-# V1 interconnections
-conn_ee_dict = {
-    "connection_type": "convergent",
-    "mask": {
-        "circular": {
-            "radius": 1.0
-        }
-    },
-    'kernel': {
-        'gaussian': {
-            'p_center': 1.0,
-            'sigma': 0.15
-        }
-    },
-    "weights": 1.0,
-    "delays": {
-        "linear":
-            {
-                "c": 0.1,
-                "a": 0.2
-            }
-    }
-}
-
-
-conn_ie_dict = {
-    "connection_type": "convergent",
-    "mask": {
-        "circular": {
-            "radius": 1.0
-        }
-    },
-    #'kernel': {
-    #    'gaussian': {
-    #        'p_center': 1.0,
-    #        'sigma': 0.15
-    #    }
-    #},
-    "weights": -0.5,
-    "delays": {
-        "linear": {
-            "c": 0.1, "a": 0.2
-        }
-    }
-}
-
-conn_ei_dict = {
-    "connection_type": "convergent",
-    "mask": {
-        "circular": {
-            "radius": 1.0
-        }
-    },
-    #'kernel': {
-    #    'gaussian': {
-    #        'p_center': 1.0,
-    #        'sigma': 0.15
-    #    }
-    #},
-    "weights": 1.0,
-    "delays":
-        {
-            "linear":
-                {
-                    "c": 0.1,
-                    "a": 0.2
-                }
-        }
-}
-conn_ii_dict = {
-    "connection_type": "convergent",
-    "mask": {
-        "circular": {
-            "radius": 1.0
-        }
-    },
-    'kernel': {
-        'gaussian': {
-            'p_center': 1.0,
-            'sigma': 0.15
-        }
-    },
-    "weights": -4.0,
-    "delays" : { "linear" : { "c": 0.1 , "a" : 0.2 } }
-}
-
 # Log parameters.
-
 layers = pd.DataFrame.from_dict(
     [
         {**{"name": "full_retina_dict"}, **full_retina_dict},
@@ -217,7 +96,7 @@ projections = pd.DataFrame.from_dict(
         {**{"name": "conn_ee_dict"}, **conn_ee_dict},
         {**{"name": "conn_ei_dict"}, **conn_ei_dict},
         {**{"name": "conn_ie_dict"}, **conn_ie_dict},
-        {**{"name": "conn_ee_dict"}, **conn_ee_dict}
+        {**{"name": "conn_ii_dict"}, **conn_ii_dict}
     ]
 )
 
@@ -227,8 +106,6 @@ print("Layer definitions")
 print(layers.to_string())
 print("Projection definition")
 print(projections.to_string())
-
-# TODO copy env file.
 
 # Retina, LGN.
 full_retina_on = topology.CreateLayer(full_retina_dict)
@@ -249,7 +126,7 @@ plotLayers = os.getenv("PLOT_LAYERS", "False") == "True"
 connections = [
     # Receptive field to parrot
     (full_retina_on, parrot_retina_on, conn_retina_parrot_dict, "1.retina_to_parrot_on", simulation_prefix, plotLayers),
-    #    (full_retina_off, parrot_retina_off, conn_retina_parrot_dict, "2.retina_to_parrot_off", simulation_prefix, plotLayers),
+    #(full_retina_off, parrot_retina_off, conn_retina_parrot_dict, "2.retina_to_parrot_off", simulation_prefix, plotLayers),
     # Parrot to V1
     (full_retina_on, ex_on_center, conn_parrot_v1_dict, "3.parrot_to_ex_on", simulation_prefix, plotLayers),
     (full_retina_on, in_on_center, conn_parrot_v1_dict, "4.parrot_to_in_on", simulation_prefix, plotLayers),
@@ -257,19 +134,21 @@ connections = [
     #(full_retina_off, in_off_center, conn_parrot_v1_dict, "6.parrot_to_in_off", simulation_prefix, plotLayers),
     # Lateral connection V1
     # ON <==> ON
-    #(ex_on_center, ex_on_center, conn_ee_dict, "7.ex_on_to_ex_on", simulation_prefix, plotLayers),
+    (ex_on_center, ex_on_center, conn_ee_dict, "7.ex_on_to_ex_on", simulation_prefix, plotLayers),
     (ex_on_center, in_on_center, conn_ei_dict, "8.ex_on_to_in_on", simulation_prefix, plotLayers),
     (in_on_center, ex_on_center, conn_ie_dict, "9.in_on_to_ex_on", simulation_prefix, plotLayers),
+    (in_on_center, in_on_center, conn_ii_dict, "10.in_on_to_in_on", simulation_prefix, plotLayers),
     ## OFF <==> OFF
-    #(ex_off_center, ex_off_center, conn_ee_dict, "10.ex_off_to_ex_off", simulation_prefix, plotLayers),
-    #(ex_off_center, in_off_center, conn_ei_dict, "11.ex_off_to_in_on", simulation_prefix, plotLayers),
-    #(in_off_center, ex_off_center, conn_ie_dict, "12.in_off_to_ex_off", simulation_prefix, plotLayers),
+    #(ex_off_center, ex_off_center, conn_ee_dict, "11.ex_off_to_ex_off", simulation_prefix, plotLayers),
+    #(ex_off_center, in_off_center, conn_ei_dict, "12.ex_off_to_in_on", simulation_prefix, plotLayers),
+    #(in_off_center, ex_off_center, conn_ie_dict, "13.in_off_to_ex_off", simulation_prefix, plotLayers),
+    #(in_off_center, in_off_center, conn_ii_dict, "14.in_off_to_in_off", simulation_prefix, plotLayers),
     ## INH_ON ==> OFF
-    #(in_on_center, ex_off_center, conn_ie_dict, "13.in_on_to_ex_off", simulation_prefix, plotLayers),
-    #(in_on_center, in_off_center, conn_ii_dict, "14.in_on_to_in_off", simulation_prefix, plotLayers),
+    #(in_on_center, ex_off_center, conn_ie_dict, "15.in_on_to_ex_off", simulation_prefix, plotLayers),
+    #(in_on_center, in_off_center, conn_ii_dict, "16.in_on_to_in_off", simulation_prefix, plotLayers),
     ## INH_OFF => ON
-    #(in_off_center, ex_on_center, conn_ie_dict, "15.in_off_to_ex_on", simulation_prefix, plotLayers),
-    #(in_off_center, in_on_center, conn_ii_dict, "16.in_off_to_in_on", simulation_prefix, plotLayers)
+    #(in_off_center, ex_on_center, conn_ie_dict, "17.in_off_to_ex_on", simulation_prefix, plotLayers),
+    #(in_off_center, in_on_center, conn_ii_dict, "18.in_off_to_in_on", simulation_prefix, plotLayers)
 ]
 
 simulate = os.getenv("SIMULATE", "True") == "True"
@@ -284,7 +163,7 @@ if connect or simulate:
 #recorder2 = Recorder(parrot_retina_off, 'parrot_retina_off', simulation_prefix, simulation_time)
 recorder3 = Recorder(ex_on_center, 'ex_on_center', simulation_prefix, simulation_time)
 #recorder4 = Recorder(ex_off_center, 'ex_off_center', simulation_prefix, simulation_time)
-#recorder5 = Recorder(in_on_center, 'in_on_center', simulation_prefix, simulation_time)
+recorder5 = Recorder(in_on_center, 'in_on_center', simulation_prefix, simulation_time)
 #recorder6 = Recorder(in_off_center, 'in_off_center', simulation_prefix, simulation_time)
 
 # --------------------------------------------------
@@ -335,7 +214,13 @@ if simulate:
 
     #recorder1.make_video(group_frames=True, play_it=play_it)
     #recorder2.make_video(group_frames=True, play_it=play_it)
-    recorder3.make_video(group_frames=True, play_it=play_it)
+    recorder3.make_video(group_frames=False, play_it=play_it)
     #recorder4.make_video(group_frames=True, play_it=play_it)
-    #recorder5.make_video(group_frames=True, play_it=play_it)
+    recorder5.make_video(group_frames=False, play_it=play_it)
     #recorder6.make_video(group_frames=True, play_it=play_it)
+
+
+open_it = os.getenv("OPEN_IT", "False") == "True"
+
+if open_it:
+    subprocess.call('xdg-open ' + './output/' + simulation_prefix, shell=True)

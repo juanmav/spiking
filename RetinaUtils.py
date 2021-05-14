@@ -31,6 +31,7 @@ def image_array_to_retina(exposed_pattern, retina, center_on_or_off):
             nest.SetStatus(ganglion_cells_id, {'rate': rate * 1.0})
 
 
+# TODO Move to gabor filter orientation frequency. 2D gabor functional.
 center_on_kernel = [
     [0.1, 0.1, 0.1, 0.1, 0.1],
     [0.1, -1.0, -1.0, -1.0, 0.1],
