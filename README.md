@@ -63,6 +63,10 @@ You can check results on the `./output` folder.
 
 ![](./assets/outputlayout.png)
 
+### Simplified 
+
+![](./assets/simplefied_outputlayout.png)
+
 ## TODO
 
 - Improve LayerRecorder
