@@ -101,8 +101,10 @@ class Recorder:
                 subprocess.call('xdg-open ' + self.output_folder + '0video.mp4', shell=True)
 
     def process_image(self, parameters):
+        comm = MPI.COMM_WORLD
+        rank = comm.Get_rank()
         [step, ids, array, grouped] = parameters
-        print("Frame: " + str(step))
+        print("[" + str(rank) + "]" + "Frame: " + str(step))
         image_frame_dict = dict(zip(ids, array.T))
 
         if step in grouped.groups:

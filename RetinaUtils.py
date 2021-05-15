@@ -4,6 +4,7 @@ import numpy as np
 from PIL import Image
 from scipy import signal
 from skimage.filters import gabor_kernel
+import os
 
 
 # Takes an image and convert it to a 2D array.
@@ -28,7 +29,9 @@ def image_array_to_retina(exposed_pattern, retina, center_on_or_off):
     kernel = np.real(gk if center_on_or_off == 'on' else -gk)
     convoluted = signal.convolve2d(exposed_pattern, kernel, boundary='symm', mode='same').clip(min=0)
     # TODO https://stackoverflow.com/questions/929103/convert-a-number-range-to-another-range-maintaining-ratio
-    convoluted = (convoluted * 90) + 10
+    max_spiking_rate = int(os.getenv("MAX_SPIKING_RATE", 90))
+    min_spiking_rate = int(os.getenv("MIN_SPIKING_RATE", 10))
+    convoluted = (convoluted * (max_spiking_rate - min_spiking_rate)) + min_spiking_rate
     for row in range(0, height):
         for column in range(0, width):
             ganglion_cells_id = topology.GetElement(retina, (row, column))

@@ -209,12 +209,13 @@ if simulate:
         nest.Simulate(change_pattern_step)
 
     play_it = os.getenv("PLAY_IT", "False") == "True"
+    group_frames = os.getenv("GROUP_FRAMES", "False") == "True"
 
     # recorder1.make_video(group_frames=True, play_it=play_it)
     # recorder2.make_video(group_frames=True, play_it=play_it)
-    recorder3.make_video(group_frames=False, play_it=play_it)
+    recorder3.make_video(group_frames=group_frames, play_it=play_it)
     # recorder4.make_video(group_frames=True, play_it=play_it)
-    recorder5.make_video(group_frames=False, play_it=play_it)
+    recorder5.make_video(group_frames=group_frames, play_it=play_it)
     # recorder6.make_video(group_frames=True, play_it=play_it)
 
 
