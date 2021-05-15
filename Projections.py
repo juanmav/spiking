@@ -18,19 +18,19 @@ conn_parrot_v1_dict = {
             "radius": 0.5
         }
     },
-    #"kernel": {
+    # "kernel": {
     #    "gaussian": {
     #        "p_center": 1.0,
     #        "sigma": 0.05
     #    }
-    #},
+    # },
     "weights": 7.5,
-    "delays": {
-        "linear": {
-            "c": 0.1,
-            "a": 0.2
-        }
-    }
+    # "delays": {
+    #     "linear": {
+    #         "c": 0.1,
+    #         "a": 0.2
+    #     }
+    # }
 }
 
 # p(d) = c + ad
@@ -49,12 +49,12 @@ conn_ee_dict = {
         }
     },
     "weights": 1.0,
-    "delays": {
-        "linear": {
-            "c": 0.1,
-            "a": 0.2
-        }
-    }
+    # "delays": {
+    #     "linear": {
+    #         "c": 0.1,
+    #         "a": 0.2
+    #     }
+    # }
 }
 
 conn_ie_dict = {
@@ -71,12 +71,12 @@ conn_ie_dict = {
         }
     },
     "weights": -5.0,
-    "delays": {
-        "linear": {
-            "c": 0.1,
-            "a": 0.2
-        }
-    }
+    # "delays": {
+    #     "linear": {
+    #         "c": 0.1,
+    #         "a": 0.2
+    #     }
+    # }
 }
 
 conn_ei_dict = {
@@ -93,12 +93,12 @@ conn_ei_dict = {
         }
     },
     "weights": 1.0,
-    "delays": {
-        "linear": {
-            "c": 0.1,
-            "a": 0.2
-        }
-    }
+    # "delays": {
+    #     "linear": {
+    #         "c": 0.1,
+    #         "a": 0.2
+    #     }
+    # }
 }
 
 conn_ii_dict = {
@@ -115,10 +115,10 @@ conn_ii_dict = {
         }
     },
     "weights": -0.5,
-    "delays": {
-        "linear": {
-            "c": 0.1,
-            "a": 0.2
-        }
-    }
+    # "delays": {
+    #     "linear": {
+    #         "c": 0.1,
+    #         "a": 0.2
+    #     }
+    # }
 }

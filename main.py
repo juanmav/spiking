@@ -51,7 +51,7 @@ image_size = ceil(sqrt(TOTAL_RECEPTIVE_FIELD_COUNT) / 10)
 # Comment for the sake of understanding for now.
 # hard code steps below
 
-full_retina_dict = {
+retina_dict = {
     "extent": [SPATIAL_WIDTH_AND_HEIGHT, SPATIAL_WIDTH_AND_HEIGHT],
     "rows": RECEPTIVE_FIELD_HEIGHT_WIDTH,
     "columns": RECEPTIVE_FIELD_HEIGHT_WIDTH,
@@ -83,7 +83,7 @@ layer_inhibitory_dict = {
 # Log parameters.
 layers = pd.DataFrame.from_dict(
     [
-        {**{"name": "full_retina_dict"}, **full_retina_dict},
+        {**{"name": "retina_dict"}, **retina_dict},
         {**{"name": "parrot_layer_dict"}, **parrot_layer_dict},
         {**{"name": "layer_excitatory_dict"}, **layer_excitatory_dict},
         {**{"name": "layer_inhibitory_dict"}, **layer_inhibitory_dict}
@@ -108,8 +108,8 @@ print("Projection definition")
 print(projections.to_string())
 
 # Retina, LGN.
-full_retina_on = topology.CreateLayer(full_retina_dict)
-#full_retina_off = topology.CreateLayer(full_retina_dict)
+retina_on = topology.CreateLayer(retina_dict)
+#retina_off = topology.CreateLayer(retina_dict)
 
 # Parrot
 parrot_retina_on = topology.CreateLayer(parrot_layer_dict)
@@ -121,57 +121,55 @@ in_on_center = topology.CreateLayer(layer_inhibitory_dict)
 #ex_off_center = topology.CreateLayer(layer_excitatory_dict)
 #in_off_center = topology.CreateLayer(layer_inhibitory_dict)
 
-plotLayers = os.getenv("PLOT_LAYERS", "False") == "True"
 # Connections
 connections = [
     # Receptive field to parrot
-    (full_retina_on, parrot_retina_on, conn_retina_parrot_dict, "1.retina_to_parrot_on", simulation_prefix, plotLayers),
-    #(full_retina_off, parrot_retina_off, conn_retina_parrot_dict, "2.retina_to_parrot_off", simulation_prefix, plotLayers),
+    (retina_on, parrot_retina_on, conn_retina_parrot_dict, "1.retina_to_parrot_on"),
+    # (retina_off, parrot_retina_off, conn_retina_parrot_dict, "2.retina_to_parrot_off"),
     # Parrot to V1
-    (full_retina_on, ex_on_center, conn_parrot_v1_dict, "3.parrot_to_ex_on", simulation_prefix, plotLayers),
-    (full_retina_on, in_on_center, conn_parrot_v1_dict, "4.parrot_to_in_on", simulation_prefix, plotLayers),
-    #(full_retina_off, ex_off_center, conn_parrot_v1_dict, "5.parrot_to_ex_off", simulation_prefix, plotLayers),
-    #(full_retina_off, in_off_center, conn_parrot_v1_dict, "6.parrot_to_in_off", simulation_prefix, plotLayers),
+    (retina_on, ex_on_center, conn_parrot_v1_dict, "3.parrot_to_ex_on"),
+    (retina_on, in_on_center, conn_parrot_v1_dict, "4.parrot_to_in_on"),
+    # (retina_off, ex_off_center, conn_parrot_v1_dict, "5.parrot_to_ex_off"),
+    # (retina_off, in_off_center, conn_parrot_v1_dict, "6.parrot_to_in_off"),
     # Lateral connection V1
     # ON <==> ON
-    (ex_on_center, ex_on_center, conn_ee_dict, "7.ex_on_to_ex_on", simulation_prefix, plotLayers),
-    (ex_on_center, in_on_center, conn_ei_dict, "8.ex_on_to_in_on", simulation_prefix, plotLayers),
-    (in_on_center, ex_on_center, conn_ie_dict, "9.in_on_to_ex_on", simulation_prefix, plotLayers),
-    (in_on_center, in_on_center, conn_ii_dict, "10.in_on_to_in_on", simulation_prefix, plotLayers),
+    (ex_on_center, ex_on_center, conn_ee_dict, "7.ex_on_to_ex_on"),
+    (ex_on_center, in_on_center, conn_ei_dict, "8.ex_on_to_in_on"),
+    (in_on_center, ex_on_center, conn_ie_dict, "9.in_on_to_ex_on"),
+    (in_on_center, in_on_center, conn_ii_dict, "10.in_on_to_in_on"),
     ## OFF <==> OFF
-    #(ex_off_center, ex_off_center, conn_ee_dict, "11.ex_off_to_ex_off", simulation_prefix, plotLayers),
-    #(ex_off_center, in_off_center, conn_ei_dict, "12.ex_off_to_in_on", simulation_prefix, plotLayers),
-    #(in_off_center, ex_off_center, conn_ie_dict, "13.in_off_to_ex_off", simulation_prefix, plotLayers),
-    #(in_off_center, in_off_center, conn_ii_dict, "14.in_off_to_in_off", simulation_prefix, plotLayers),
+    # (ex_off_center, ex_off_center, conn_ee_dict, "11.ex_off_to_ex_off"),
+    # (ex_off_center, in_off_center, conn_ei_dict, "12.ex_off_to_in_on"),
+    # (in_off_center, ex_off_center, conn_ie_dict, "13.in_off_to_ex_off"),
+    # (in_off_center, in_off_center, conn_ii_dict, "14.in_off_to_in_off"),
     ## INH_ON ==> OFF
-    #(in_on_center, ex_off_center, conn_ie_dict, "15.in_on_to_ex_off", simulation_prefix, plotLayers),
-    #(in_on_center, in_off_center, conn_ii_dict, "16.in_on_to_in_off", simulation_prefix, plotLayers),
+    # (in_on_center, ex_off_center, conn_ie_dict, "15.in_on_to_ex_off"),
+    # (in_on_center, in_off_center, conn_ii_dict, "16.in_on_to_in_off"),
     ## INH_OFF => ON
-    #(in_off_center, ex_on_center, conn_ie_dict, "17.in_off_to_ex_on", simulation_prefix, plotLayers),
-    #(in_off_center, in_on_center, conn_ii_dict, "18.in_off_to_in_on", simulation_prefix, plotLayers)
+    # (in_off_center, ex_on_center, conn_ie_dict, "17.in_off_to_ex_on"),
+    # (in_off_center, in_on_center, conn_ii_dict, "18.in_off_to_in_on")
 ]
 
 simulate = os.getenv("SIMULATE", "True") == "True"
 connect = os.getenv("CONNECT", "True") == "True"
+plotLayers = os.getenv("PLOT_LAYERS", "False") == "True"
 
 if connect or simulate:
     for connection in connections:
-        tuple_connect_and_plot_layers_with_projection(connection)
+        tuple_connect_and_plot_layers_with_projection(connection, simulation_prefix, plotLayers)
 
 # ------------ Measurements Section ----------------
-#recorder1 = Recorder(parrot_retina_on, 'parrot_retina_on', simulation_prefix, simulation_time)
-#recorder2 = Recorder(parrot_retina_off, 'parrot_retina_off', simulation_prefix, simulation_time)
+# recorder1 = Recorder(parrot_retina_on, 'parrot_retina_on', simulation_prefix, simulation_time)
+# recorder2 = Recorder(parrot_retina_off, 'parrot_retina_off', simulation_prefix, simulation_time)
 recorder3 = Recorder(ex_on_center, 'ex_on_center', simulation_prefix, simulation_time)
-#recorder4 = Recorder(ex_off_center, 'ex_off_center', simulation_prefix, simulation_time)
+# recorder4 = Recorder(ex_off_center, 'ex_off_center', simulation_prefix, simulation_time)
 recorder5 = Recorder(in_on_center, 'in_on_center', simulation_prefix, simulation_time)
-#recorder6 = Recorder(in_off_center, 'in_off_center', simulation_prefix, simulation_time)
-
+# recorder6 = Recorder(in_off_center, 'in_off_center', simulation_prefix, simulation_time)
 # --------------------------------------------------
 
 # Patterns from Image
 # image_array_0 = np.divide(array_from_image("./images/pattern0.png"), 255)
 # image_array_1 = np.divide(array_from_image("./images/pattern1.png"), 255)
-
 # Patterns from numpy
 image_array_0 = np.pad(np.kron(np.array(get_pattern_0()), np.ones((image_size, image_size))), 1, mode='edge')
 image_array_1 = np.pad(np.kron(np.array(get_pattern_1()), np.ones((image_size, image_size))), 1, mode='edge')
@@ -203,21 +201,21 @@ if simulate:
             pattern = image_array_1
             flip_flop = not flip_flop
 
-        image_array_to_retina(pattern, full_retina_on, 'on')
-        #image_array_to_retina(pattern, full_retina_off, 'off')
-        take_poisson_layer_snapshot(full_retina_on, str(step)+"-full_retina_on", simulation_prefix)
-        #take_poisson_layer_snapshot(full_retina_off, str(step)+"-full_retina_off", simulation_prefix)
+        image_array_to_retina(pattern, retina_on, 'on')
+        #image_array_to_retina(pattern, retina_off, 'off')
+        take_poisson_layer_snapshot(retina_on, str(step) + "-retina_on", simulation_prefix)
+        #take_poisson_layer_snapshot(retina_off, str(step)+"-retina_off", simulation_prefix)
 
         nest.Simulate(change_pattern_step)
 
     play_it = os.getenv("PLAY_IT", "False") == "True"
 
-    #recorder1.make_video(group_frames=True, play_it=play_it)
-    #recorder2.make_video(group_frames=True, play_it=play_it)
+    # recorder1.make_video(group_frames=True, play_it=play_it)
+    # recorder2.make_video(group_frames=True, play_it=play_it)
     recorder3.make_video(group_frames=False, play_it=play_it)
-    #recorder4.make_video(group_frames=True, play_it=play_it)
+    # recorder4.make_video(group_frames=True, play_it=play_it)
     recorder5.make_video(group_frames=False, play_it=play_it)
-    #recorder6.make_video(group_frames=True, play_it=play_it)
+    # recorder6.make_video(group_frames=True, play_it=play_it)
 
 
 open_it = os.getenv("OPEN_IT", "False") == "True"

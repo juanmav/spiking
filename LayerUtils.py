@@ -162,7 +162,7 @@ def connect_and_plot_layers_with_projection(origin, target, projection, filename
         fig.savefig(folder + filename + '.png')
 
 
-def tuple_connect_and_plot_layers_with_projection(parameters):
-    [origin, target, projection, filename, simulation_prefix, plot] = parameters
+def tuple_connect_and_plot_layers_with_projection(parameters, simulation_prefix, plot):
+    [origin, target, projection, filename] = parameters
     connect_and_plot_layers_with_projection(origin, target, projection, filename, simulation_prefix, plot=plot)
 
