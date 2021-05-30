@@ -10,6 +10,8 @@ from Utils import get_simulation_prefix
 from Projections import conn_ii_dict, conn_ee_dict, conn_ei_dict, conn_ie_dict, conn_parrot_v1_dict, conn_retina_parrot_dict
 import pandas as pd
 import subprocess
+from mpi4py import MPI
+import matplotlib.pyplot as plt
 from dotenv import load_dotenv
 load_dotenv()
 
@@ -159,7 +161,7 @@ if connect or simulate:
         tuple_connect_and_plot_layers_with_projection(connection, simulation_prefix, plotLayers)
 
 # ------------ Measurements Section ----------------
-# recorder1 = Recorder(parrot_retina_on, 'parrot_retina_on', simulation_prefix, simulation_time)
+recorder1 = Recorder(parrot_retina_on, 'parrot_retina_on', simulation_prefix, simulation_time)
 # recorder2 = Recorder(parrot_retina_off, 'parrot_retina_off', simulation_prefix, simulation_time)
 recorder3 = Recorder(ex_on_center, 'ex_on_center', simulation_prefix, simulation_time)
 # recorder4 = Recorder(ex_off_center, 'ex_off_center', simulation_prefix, simulation_time)
@@ -190,7 +192,7 @@ flip_flop = True
 pattern = image_array_0
 
 if simulate:
-    for step in range(1, simulation_time, change_pattern_step):
+    for step in range(change_pattern_step, simulation_time + 1, change_pattern_step):
         total_time = + step
         print("Total simulation time:" + str(total_time))
 
@@ -211,15 +213,25 @@ if simulate:
     play_it = os.getenv("PLAY_IT", "False") == "True"
     group_frames = os.getenv("GROUP_FRAMES", "False") == "True"
 
-    # recorder1.make_video(group_frames=True, play_it=play_it)
-    # recorder2.make_video(group_frames=True, play_it=play_it)
-    recorder3.make_video(group_frames=group_frames, play_it=play_it)
-    # recorder4.make_video(group_frames=True, play_it=play_it)
-    recorder5.make_video(group_frames=group_frames, play_it=play_it)
-    # recorder6.make_video(group_frames=True, play_it=play_it)
+    eeg1 = recorder1.make_video(group_frames=group_frames, play_it=play_it, local_num_threads=local_num_threads)
+    # eeg2 =  recorder2.make_video(group_frames=group_frames, play_it=play_it, local_num_threads=local_num_threads)
+    eeg3 = recorder3.make_video(group_frames=group_frames, play_it=play_it, local_num_threads=local_num_threads)
+    # eeg4 = recorder4.make_video(group_frames=group_frames, play_it=play_it, local_num_threads=local_num_threads)
+    eeg5 = recorder5.make_video(group_frames=group_frames, play_it=play_it, local_num_threads=local_num_threads)
+    # eeg6 = recorder6.make_video(group_frames=group_frames, play_it=play_it, local_num_threads=local_num_threads)
 
+    comm = MPI.COMM_WORLD
+    rank = comm.Get_rank()
 
-open_it = os.getenv("OPEN_IT", "False") == "True"
+    if rank == 0:
+        x_coordinates = np.arange(eeg1.size)
 
-if open_it:
-    subprocess.call('xdg-open ' + './output/' + simulation_prefix, shell=True)
+        plt.plot(x_coordinates, eeg3, label='ex_on_center')
+        plt.plot(x_coordinates, eeg5, label='ex_in_center')
+        plt.plot(x_coordinates, eeg3 + eeg5, label='total')
+        plt.legend()
+        plt.savefig(f'./output/{simulation_prefix}/total_eeg.png')
+
+        open_it = os.getenv("OPEN_IT", "False") == "True"
+        if open_it:
+            subprocess.call('xdg-open ' + './output/' + simulation_prefix, shell=True)

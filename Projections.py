@@ -24,7 +24,7 @@ conn_parrot_v1_dict = {
     #        "sigma": 0.05
     #    }
     # },
-    "weights": 7.5,
+    "weights": 3.0,
     # "delays": {
     #     "linear": {
     #         "c": 0.1,
@@ -70,7 +70,7 @@ conn_ie_dict = {
             "sigma": 0.15
         }
     },
-    "weights": -5.0,
+    "weights": -2.0,
     # "delays": {
     #     "linear": {
     #         "c": 0.1,

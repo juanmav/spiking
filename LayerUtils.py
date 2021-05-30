@@ -4,7 +4,6 @@ import numpy as np
 import pandas as pd
 import png
 import subprocess
-import matplotlib.pyplot as plt
 from pathlib import Path
 import glob
 from mpi4py import MPI
@@ -25,52 +24,80 @@ def take_poisson_layer_snapshot(layer, layer_name, simulation_prefix):
 
 class Recorder:
 
-    def __init__(self, layer, layer_name, simulation_prefix, simulation_time):
-        self.layer = layer
-        self.layer_first_id = nest.GetLeaves(self.layer)[0][0]
-        self.layer_size = len(nest.GetLeaves(self.layer)[0])
-        self.simulation_time = simulation_time
-        self.simulation_prefix = simulation_prefix
-        folder = './output/' + self.simulation_prefix + '/spike_detector/'
-        Path(folder).mkdir(parents=True, exist_ok=True)
-        label = folder + layer_name
-        self.spike_detector = nest.Create('spike_detector', params={
-            "withgid": True,
-            "withtime": True,
-            "to_file": True,
-            "label": label
-        })
-        nest.Connect(nest.GetLeaves(self.layer)[0], self.spike_detector)
+    def __init__(self, *args, **kwargs):
+        print(kwargs)
+        if 're_process' not in kwargs:
+            layer, layer_name, simulation_prefix, simulation_time = args
+            self.layer = layer
+            self.layer_name = layer_name
+            self.layer_first_id = nest.GetLeaves(self.layer)[0][0]
+            self.layer_size = len(nest.GetLeaves(self.layer)[0])
+            self.simulation_time = simulation_time
+            self.simulation_prefix = simulation_prefix
+            folder = './output/' + self.simulation_prefix + '/spike_detector/'
+            Path(folder).mkdir(parents=True, exist_ok=True)
+            label = folder + layer_name
+            self.spike_detector = nest.Create('spike_detector', params={
+                "withgid": True,
+                "withtime": True,
+                "to_file": True,
+                "label": label
+            })
+            nest.Connect(nest.GetLeaves(self.layer)[0], self.spike_detector)
 
-        self.filename = label + '-' + str(self.spike_detector[0]) + '-*.gdf'
-        self.output_folder = self.filename.split('-*.gdf')[0] + '/'
+            self.filename = label + '-*.gdf'
+            self.output_folder = self.filename.split('-*.gdf')[0] + '/'
+            comm = MPI.COMM_WORLD
+            rank = comm.Get_rank()
+            if rank == 0:
+                with open('./output/' + self.simulation_prefix + '/filename.txt', 'a+') as f:
+                    print(
+                        f'r = LayerUtils.Recorder.re_process({layer}, \'{layer_name}\', \'{simulation_prefix}\', {simulation_time}, {self.layer_first_id}, {self.layer_size})', file=f)
+                    print('r.make_video(group_frames=True, play_it=True, local_num_threads=4)', file=f)
+        else:
+            layer, layer_name, simulation_prefix, simulation_time, layer_first_id, layer_size = args
+            self.layer = layer
+            self.layer_name = layer_name
+            self.layer_first_id = layer_first_id
+            self.layer_size = layer_size
+            self.simulation_time = simulation_time
+            self.simulation_prefix = simulation_prefix
+            folder = './output/' + self.simulation_prefix + '/spike_detector/'
+            label = folder + layer_name
+            self.filename = label + '-*.gdf'
+            self.output_folder = self.filename.split('-*.gdf')[0] + '/'
+
+
+    @classmethod
+    def re_process(cls, layer, layer_name, simulation_prefix, simulation_time, layer_first_id, size):
+        return cls(layer, layer_name, simulation_prefix, simulation_time, layer_first_id, size, re_process=True)
 
     # TODO create all in memory and read the file and make a +1 to the position.
-    def make_video(self, group_frames=True, play_it=True):
+    def make_video(self, group_frames=True, play_it=True, local_num_threads=4):
         # https://www.youtube.com/watch?v=36nCgG40DJo HPC
         # https://www.youtube.com/watch?v=RR4SoktDQAw Threads python.
 
         print('This should be call after simulation.')
-        data = pd.concat(
+        spikes_data = pd.concat(
             [
                 pd.read_csv(f, '\t', header=None, usecols=[0, 1], names=['neuron', 'time'])
                 for f in glob.glob(self.filename)
             ]
         )
         # TODO check with there are nulls spikes or/and file concat
-        data = data.dropna()
+        spikes_data = spikes_data.dropna()
 
         if group_frames:
             frames = self.simulation_time
-            data['time'] = data['time'].astype(int)
+            spikes_data['time'] = spikes_data['time'].astype(int)
         else:
             frames = self.simulation_time * 10
-            data['time'] = data['time'] * 10
+            spikes_data['time'] = spikes_data['time'] * 10
 
-        data.sort_values(by=['time'], inplace=True)
+        spikes_data.sort_values(by=['time'], inplace=True)
         ids = list(range(self.layer_first_id, self.layer_first_id + self.layer_size))
         array = np.zeros(len(ids), dtype=np.dtype('uint8'))
-        grouped = data.groupby(['time'])
+        grouped = spikes_data.groupby(['time'])
 
         Path(self.output_folder).mkdir(parents=True, exist_ok=True)
 
@@ -83,22 +110,24 @@ class Recorder:
         to_frame = (rank + 1) * frames_per_rank
 
         parameters = [[step, ids, array, grouped] for step in range(from_frame, to_frame)]
-        pool = multiprocessing.Pool(processes=4)
-        pool.map(self.process_image, parameters)
+        pool = multiprocessing.Pool(processes=local_num_threads)
+        localresult = pool.map(self.process_image, parameters)
 
+        spikes_data = comm.gather(localresult, root=0)
         # Synchronization point
         comm.barrier()
 
         if rank == 0:
-            ffmpeg_command_line = 'ffmpeg -i ' + self.output_folder + '%d.png -vf "setpts=(1/1)*PTS"  -threads 16 ' + self.output_folder + '0video.mp4'
+            ffmpeg_command_line = 'ffmpeg -i ' + self.output_folder + '%d.png -vf "setpts=(1/1)*PTS"  -threads 16 ' + self.output_folder + f'../../{self.layer_name}.mp4'
             print(ffmpeg_command_line)
             subprocess.call(
                 ffmpeg_command_line,
                 shell=True
             )
-
+            eeg = np.array(spikes_data).flatten()
             if play_it:
-                subprocess.call('xdg-open ' + self.output_folder + '0video.mp4', shell=True)
+                subprocess.call('xdg-open ' + self.output_folder + f'../../{self.layer_name}.mp4', shell=True)
+            return eeg
 
     def process_image(self, parameters):
         comm = MPI.COMM_WORLD
@@ -116,9 +145,13 @@ class Recorder:
 
         image_frame_array = [value for key, value in image_frame_dict.items()]
         square = np.reshape(image_frame_array, (-1, int(self.layer_size ** (1 / 2.0))))
-        square = np.kron(square, np.ones((10, 10)))  # "Zoom/Expand" array.
+        spike_count = np.sum(square)
+        # "Zoom/Expand" array to make images "nicer"
+        square = np.kron(square, np.ones((10, 10)))
         image = png.from_array(square.astype('uint8'), mode='L;1')
         image.save(self.output_folder + str(step) + '.png')
+
+        return spike_count
 
 
 def connect_and_plot_layers_with_projection(origin, target, projection, filename, simulation_prefix, plot=True):
@@ -137,7 +170,7 @@ def connect_and_plot_layers_with_projection(origin, target, projection, filename
         plt.scatter([], [], c='green', alpha=0.3, s=40, label='Pre')
         plt.scatter([], [], c='red', alpha=0.3, s=40, label='Post')
         plt.scatter([], [], c='yellow', alpha=0.3, s=20, label='Target')
-        plt.legend(loc='lower center',  bbox_to_anchor=(0.5, -0.15), frameon=False, ncol=3)
+        plt.legend(loc='lower center', bbox_to_anchor=(0.5, -0.15), frameon=False, ncol=3)
 
         if ("mask" in projection) and ("kernel" in projection):
             topology.PlotTargets(
@@ -167,4 +200,3 @@ def connect_and_plot_layers_with_projection(origin, target, projection, filename
 def tuple_connect_and_plot_layers_with_projection(parameters, simulation_prefix, plot):
     [origin, target, projection, filename] = parameters
     connect_and_plot_layers_with_projection(origin, target, projection, filename, simulation_prefix, plot=plot)
-
