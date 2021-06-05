@@ -102,12 +102,15 @@ projections = pd.DataFrame.from_dict(
     ]
 )
 
-print("Env Settings")
-print(open('.env').read())
-print("Layer definitions")
-print(layers.to_string())
-print("Projection definition")
-print(projections.to_string())
+filename = './output/' + simulation_prefix + '/envvars.txt'
+os.makedirs(os.path.dirname(filename), exist_ok=True)
+with open(filename, 'a+') as f:
+    print("Env Settings")
+    print(open('.env').read(), file=f)
+    print("Layer definitions")
+    print(layers.to_csv(sep='\t'), file=f)
+    print("Projection definition")
+    print(projections.to_csv(sep='\t'), file=f)
 
 # Retina, LGN.
 retina_on = topology.CreateLayer(retina_dict)
@@ -232,6 +235,6 @@ if simulate:
         plt.legend()
         plt.savefig(f'./output/{simulation_prefix}/total_eeg.png')
 
-        open_it = os.getenv("OPEN_IT", "False") == "True"
-        if open_it:
-            subprocess.call('xdg-open ' + './output/' + simulation_prefix, shell=True)
+open_it = os.getenv("OPEN_IT", "False") == "True"
+if open_it:
+    subprocess.call('xdg-open ' + './output/' + simulation_prefix, shell=True)

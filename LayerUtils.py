@@ -50,7 +50,7 @@ class Recorder:
             comm = MPI.COMM_WORLD
             rank = comm.Get_rank()
             if rank == 0:
-                with open('./output/' + self.simulation_prefix + '/filename.txt', 'a+') as f:
+                with open('./output/' + self.simulation_prefix + '/recorder.txt', 'a+') as f:
                     print(
                         f'r = LayerUtils.Recorder.re_process({layer}, \'{layer_name}\', \'{simulation_prefix}\', {simulation_time}, {self.layer_first_id}, {self.layer_size})', file=f)
                     print('r.make_video(group_frames=True, play_it=True, local_num_threads=4)', file=f)
