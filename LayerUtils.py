@@ -8,6 +8,8 @@ from pathlib import Path
 import glob
 from mpi4py import MPI
 import multiprocessing
+from matplotlib import cm
+from PIL import Image
 
 
 def take_poisson_layer_snapshot(layer, layer_name, simulation_prefix):
@@ -26,13 +28,17 @@ class Recorder:
 
     def __init__(self, *args, **kwargs):
         print(kwargs)
+        self.colmap = cm.get_cmap('viridis', 256)
+        self.lut = (self.colmap.colors[..., 0:3] * 255).astype(np.uint8)
         if 're_process' not in kwargs:
-            layer, layer_name, simulation_prefix, simulation_time = args
+            layer, layer_name, simulation_prefix, simulation_time, group_frames, max_spiking_rate = args
             self.layer = layer
             self.layer_name = layer_name
             self.layer_first_id = nest.GetLeaves(self.layer)[0][0]
             self.layer_size = len(nest.GetLeaves(self.layer)[0])
             self.simulation_time = simulation_time
+            self.group_frames = group_frames
+            self.max_spiking_rate = max_spiking_rate
             self.simulation_prefix = simulation_prefix
             folder = './output/' + self.simulation_prefix + '/spike_detector/'
             Path(folder).mkdir(parents=True, exist_ok=True)
@@ -51,17 +57,18 @@ class Recorder:
             rank = comm.Get_rank()
             if rank == 0:
                 with open('./output/' + self.simulation_prefix + '/recorder.txt', 'a+') as f:
-                    print(
-                        f'r = LayerUtils.Recorder.re_process({layer}, \'{layer_name}\', \'{simulation_prefix}\', {simulation_time}, {self.layer_first_id}, {self.layer_size})', file=f)
-                    print('r.make_video(group_frames=True, play_it=True, local_num_threads=4)', file=f)
+                    print(f'r = LayerUtils.Recorder.re_process({layer}, \'{layer_name}\', \'{simulation_prefix}\', {simulation_time}, {self.layer_first_id}, {self.layer_size}, {self.group_frames}, {self.max_spiking_rate})', file=f)
+                    print('r.make_video(play_it=True, local_num_threads=4)', file=f)
         else:
-            layer, layer_name, simulation_prefix, simulation_time, layer_first_id, layer_size = args
+            layer, layer_name, simulation_prefix, simulation_time, layer_first_id, layer_size, group_frames, max_spiking_rate = args
             self.layer = layer
             self.layer_name = layer_name
             self.layer_first_id = layer_first_id
             self.layer_size = layer_size
             self.simulation_time = simulation_time
+            self.group_frames = group_frames
             self.simulation_prefix = simulation_prefix
+            self.max_spiking_rate = max_spiking_rate
             folder = './output/' + self.simulation_prefix + '/spike_detector/'
             label = folder + layer_name
             self.filename = label + '-*.gdf'
@@ -69,11 +76,11 @@ class Recorder:
 
 
     @classmethod
-    def re_process(cls, layer, layer_name, simulation_prefix, simulation_time, layer_first_id, size):
-        return cls(layer, layer_name, simulation_prefix, simulation_time, layer_first_id, size, re_process=True)
+    def re_process(cls, layer, layer_name, simulation_prefix, simulation_time, layer_first_id, size, group_frames, max_spiking_rate):
+        return cls(layer, layer_name, simulation_prefix, simulation_time, layer_first_id, size, group_frames, max_spiking_rate, re_process=True)
 
     # TODO create all in memory and read the file and make a +1 to the position.
-    def make_video(self, group_frames=True, play_it=True, local_num_threads=4):
+    def make_video(self, play_it=True, local_num_threads=4):
         # https://www.youtube.com/watch?v=36nCgG40DJo HPC
         # https://www.youtube.com/watch?v=RR4SoktDQAw Threads python.
 
@@ -87,8 +94,9 @@ class Recorder:
         # TODO check with there are nulls spikes or/and file concat
         spikes_data = spikes_data.dropna()
 
-        if group_frames:
-            frames = self.simulation_time
+        if self.group_frames:
+            frames = self.simulation_time / self.group_frames
+            spikes_data['time'] = spikes_data['time'] / self.group_frames
             spikes_data['time'] = spikes_data['time'].astype(int)
         else:
             frames = self.simulation_time * 10
@@ -139,7 +147,7 @@ class Recorder:
         if step in grouped.groups:
             for row, data in grouped.get_group(step).iterrows():
                 neuron = int(data.neuron)
-                image_frame_dict[neuron] = 1
+                image_frame_dict[neuron] = image_frame_dict[neuron] + 1
         else:
             print('There is not spikes in this frame')
 
@@ -148,9 +156,13 @@ class Recorder:
         spike_count = np.sum(square)
         # "Zoom/Expand" array to make images "nicer"
         square = np.kron(square, np.ones((10, 10)))
-        image = png.from_array(square.astype('uint8'), mode='L;1')
-        image.save(self.output_folder + str(step) + '.png')
-
+        # here magic
+        rgb_per_spike = ((255*1000) / (self.group_frames * self.max_spiking_rate))
+        square = square * (rgb_per_spike if rgb_per_spike < 255 else 255)
+        square = square.astype(np.uint8)
+        result = np.zeros((*square.shape, 3), dtype=np.uint8)
+        np.take(self.lut, square, axis=0, out=result)
+        Image.fromarray(result).save(self.output_folder + str(step) + '.png')
         return spike_count
 
 

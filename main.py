@@ -22,9 +22,11 @@ nest.SetKernelStatus({"local_num_threads": local_num_threads, "print_time": True
 
 simulation_time = int(os.getenv("SIMULATION_TIME", 250))
 change_pattern_step = int(os.getenv("CHANGE_PATTERN_STEP", 250))
-simulation_prefix = get_simulation_prefix()
 
 HYPER_COLUMNS = int(os.getenv("HYPER_COLUMNS", 1))
+
+simulation_prefix = get_simulation_prefix(HYPER_COLUMNS, simulation_time)
+
 RECEPTIVE_FIELD_DENSITY = int(os.getenv("RECEPTIVE_FIELD_DENSITY", 1))
 WIDTH_HEIGHT_HYPER_COLUMN = int(os.getenv("WIDTH_HEIGHT_HYPER_COLUMN", 10))
 SPATIAL_WIDTH_AND_HEIGHT = 1.0 * round(sqrt(HYPER_COLUMNS), 2)
@@ -46,6 +48,10 @@ print("IN_V1_WIDTH_AND_HEIGHT = " + str(IN_V1_WIDTH_AND_HEIGHT))
 TOTAL_RECEPTIVE_FIELD_COUNT = HYPER_COLUMNS * WIDTH_HEIGHT_HYPER_COLUMN ** 2 * RECEPTIVE_FIELD_DENSITY
 RECEPTIVE_FIELD_HEIGHT_WIDTH = ceil(sqrt(TOTAL_RECEPTIVE_FIELD_COUNT))
 image_size = ceil(sqrt(TOTAL_RECEPTIVE_FIELD_COUNT) / 10)
+
+#
+max_spiking_rate = int(os.getenv("MAX_SPIKING_RATE", 100))
+min_spiking_rate = int(os.getenv("MIN_SPIKING_RATE", 10))
 
 #########################################################################################
 
@@ -122,7 +128,7 @@ parrot_retina_on = topology.CreateLayer(parrot_layer_dict)
 
 # V1 new cortex
 ex_on_center = topology.CreateLayer(layer_excitatory_dict)
-in_on_center = topology.CreateLayer(layer_inhibitory_dict)
+#in_on_center = topology.CreateLayer(layer_inhibitory_dict)
 #ex_off_center = topology.CreateLayer(layer_excitatory_dict)
 #in_off_center = topology.CreateLayer(layer_inhibitory_dict)
 
@@ -133,15 +139,15 @@ connections = [
     # (retina_off, parrot_retina_off, conn_retina_parrot_dict, "2.retina_to_parrot_off"),
     # Parrot to V1
     (retina_on, ex_on_center, conn_parrot_v1_dict, "3.parrot_to_ex_on"),
-    (retina_on, in_on_center, conn_parrot_v1_dict, "4.parrot_to_in_on"),
+    #(retina_on, in_on_center, conn_parrot_v1_dict, "4.parrot_to_in_on"),
     # (retina_off, ex_off_center, conn_parrot_v1_dict, "5.parrot_to_ex_off"),
     # (retina_off, in_off_center, conn_parrot_v1_dict, "6.parrot_to_in_off"),
     # Lateral connection V1
     # ON <==> ON
-    (ex_on_center, ex_on_center, conn_ee_dict, "7.ex_on_to_ex_on"),
-    (ex_on_center, in_on_center, conn_ei_dict, "8.ex_on_to_in_on"),
-    (in_on_center, ex_on_center, conn_ie_dict, "9.in_on_to_ex_on"),
-    (in_on_center, in_on_center, conn_ii_dict, "10.in_on_to_in_on"),
+    #(ex_on_center, ex_on_center, conn_ee_dict, "7.ex_on_to_ex_on"),
+    #(ex_on_center, in_on_center, conn_ei_dict, "8.ex_on_to_in_on"),
+    #(in_on_center, ex_on_center, conn_ie_dict, "9.in_on_to_ex_on"),
+    #(in_on_center, in_on_center, conn_ii_dict, "10.in_on_to_in_on"),
     ## OFF <==> OFF
     # (ex_off_center, ex_off_center, conn_ee_dict, "11.ex_off_to_ex_off"),
     # (ex_off_center, in_off_center, conn_ei_dict, "12.ex_off_to_in_on"),
@@ -163,13 +169,14 @@ if connect or simulate:
     for connection in connections:
         tuple_connect_and_plot_layers_with_projection(connection, simulation_prefix, plotLayers)
 
+group_frames = int(os.getenv("GROUP_FRAMES", 0))
 # ------------ Measurements Section ----------------
-recorder1 = Recorder(parrot_retina_on, 'parrot_retina_on', simulation_prefix, simulation_time)
-# recorder2 = Recorder(parrot_retina_off, 'parrot_retina_off', simulation_prefix, simulation_time)
-recorder3 = Recorder(ex_on_center, 'ex_on_center', simulation_prefix, simulation_time)
-# recorder4 = Recorder(ex_off_center, 'ex_off_center', simulation_prefix, simulation_time)
-recorder5 = Recorder(in_on_center, 'in_on_center', simulation_prefix, simulation_time)
-# recorder6 = Recorder(in_off_center, 'in_off_center', simulation_prefix, simulation_time)
+recorder1 = Recorder(parrot_retina_on, 'parrot_retina_on', simulation_prefix, simulation_time, group_frames, max_spiking_rate)
+# recorder2 = Recorder(parrot_retina_off, 'parrot_retina_off', simulation_prefix, simulation_time, group_frames, max_spiking_rate)
+recorder3 = Recorder(ex_on_center, 'ex_on_center', simulation_prefix, simulation_time, group_frames, max_spiking_rate)
+# recorder4 = Recorder(ex_off_center, 'ex_off_center', simulation_prefix, simulation_time, group_frames, max_spiking_rate)
+#recorder5 = Recorder(in_on_center, 'in_on_center', simulation_prefix, simulation_time, group_frames, max_spiking_rate)
+# recorder6 = Recorder(in_off_center, 'in_off_center', simulation_prefix, simulation_time, group_frames, max_spiking_rate)
 # --------------------------------------------------
 
 # Patterns from Image
@@ -206,21 +213,20 @@ if simulate:
             pattern = image_array_1
             flip_flop = not flip_flop
 
-        image_array_to_retina(pattern, retina_on, 'on')
-        #image_array_to_retina(pattern, retina_off, 'off')
+        image_array_to_retina(pattern, retina_on, 'on', max_spiking_rate, min_spiking_rate)
+        #image_array_to_retina(pattern, retina_off, 'off', max_spiking_rate, min_spiking_rate)
         take_poisson_layer_snapshot(retina_on, str(step) + "-retina_on", simulation_prefix)
         #take_poisson_layer_snapshot(retina_off, str(step)+"-retina_off", simulation_prefix)
 
         nest.Simulate(change_pattern_step)
 
     play_it = os.getenv("PLAY_IT", "False") == "True"
-    group_frames = os.getenv("GROUP_FRAMES", "False") == "True"
 
-    eeg1 = recorder1.make_video(group_frames=group_frames, play_it=play_it, local_num_threads=local_num_threads)
+    eeg1 = recorder1.make_video(play_it=play_it, local_num_threads=local_num_threads)
     # eeg2 =  recorder2.make_video(group_frames=group_frames, play_it=play_it, local_num_threads=local_num_threads)
-    eeg3 = recorder3.make_video(group_frames=group_frames, play_it=play_it, local_num_threads=local_num_threads)
+    eeg3 = recorder3.make_video(play_it=play_it, local_num_threads=local_num_threads)
     # eeg4 = recorder4.make_video(group_frames=group_frames, play_it=play_it, local_num_threads=local_num_threads)
-    eeg5 = recorder5.make_video(group_frames=group_frames, play_it=play_it, local_num_threads=local_num_threads)
+    #eeg5 = recorder5.make_video(group_frames=group_frames, play_it=play_it, local_num_threads=local_num_threads)
     # eeg6 = recorder6.make_video(group_frames=group_frames, play_it=play_it, local_num_threads=local_num_threads)
 
     comm = MPI.COMM_WORLD
@@ -229,9 +235,10 @@ if simulate:
     if rank == 0:
         x_coordinates = np.arange(eeg1.size)
 
-        plt.plot(x_coordinates, eeg3, label='ex_on_center')
-        plt.plot(x_coordinates, eeg5, label='ex_in_center')
-        plt.plot(x_coordinates, eeg3 + eeg5, label='total')
+        plt.plot(x_coordinates, eeg1, label='parrot')
+        #plt.plot(x_coordinates, eeg3, label='ex_on_center')
+        #plt.plot(x_coordinates, eeg5, label='ex_in_center')
+        #plt.plot(x_coordinates, eeg3 + eeg5, label='total')
         plt.legend()
         plt.savefig(f'./output/{simulation_prefix}/total_eeg.png')
 
