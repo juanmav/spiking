@@ -108,15 +108,19 @@ projections = pd.DataFrame.from_dict(
     ]
 )
 
-filename = './output/' + simulation_prefix + '/envvars.txt'
-os.makedirs(os.path.dirname(filename), exist_ok=True)
-with open(filename, 'a+') as f:
-    print("Env Settings")
-    print(open('.env').read(), file=f)
-    print("Layer definitions")
-    print(layers.to_csv(sep='\t'), file=f)
-    print("Projection definition")
-    print(projections.to_csv(sep='\t'), file=f)
+comm = MPI.COMM_WORLD
+rank = comm.Get_rank()
+
+if rank == 0:
+    filename = './output/' + simulation_prefix + '/envvars.txt'
+    os.makedirs(os.path.dirname(filename), exist_ok=True)
+    with open(filename, 'a+') as f:
+        print("Env Settings")
+        print(open('.env').read(), file=f)
+        print("Layer definitions")
+        print(layers.to_csv(sep='\t'), file=f)
+        print("Projection definition")
+        print(projections.to_csv(sep='\t'), file=f)
 
 # Retina, LGN.
 retina_on = topology.CreateLayer(retina_dict)
@@ -228,9 +232,6 @@ if simulate:
     # eeg4 = recorder4.make_video(group_frames=group_frames, play_it=play_it, local_num_threads=local_num_threads)
     #eeg5 = recorder5.make_video(group_frames=group_frames, play_it=play_it, local_num_threads=local_num_threads)
     # eeg6 = recorder6.make_video(group_frames=group_frames, play_it=play_it, local_num_threads=local_num_threads)
-
-    comm = MPI.COMM_WORLD
-    rank = comm.Get_rank()
 
     if rank == 0:
         x_coordinates = np.arange(eeg1.size)
