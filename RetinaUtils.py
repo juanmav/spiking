@@ -33,8 +33,6 @@ def image_array_to_retina(exposed_pattern, retina, center_on_or_off, max_spiking
     gk = get_gabor_adjusted(ksize, _lambda, theta, gamma, sigma, psi, center_on_or_off)
     gk2 = np.transpose(gk)
     # TODO check exposed_patter and retina have same size (1 to 1 relation)
-    height = len(exposed_pattern) - 2
-    width = len(exposed_pattern[0]) - 2
     #kernel = center_on_kernel if center_on_or_off == 'on' else center_off_kernel
     convoluted = signal.convolve2d(exposed_pattern, gk, boundary='symm', mode='same')
     convoluted2 = signal.convolve2d(exposed_pattern, gk2, boundary='symm', mode='same')
@@ -42,9 +40,17 @@ def image_array_to_retina(exposed_pattern, retina, center_on_or_off, max_spiking
     combined = convoluted + convoluted2
     combined = combined.clip(0, 1)
     rated = (combined * (max_spiking_rate - min_spiking_rate)) + min_spiking_rate
-    for row in range(0, height):
-        for column in range(0, width):
-            ganglion_cells_id = topology.GetElement(retina, (row, column))
-            rate = rated[row][column]
-            # print(rate)
-            nest.SetStatus(ganglion_cells_id, {'rate': rate * 1.0})
+    nodes = nest.GetNodes(retina)[0]
+    print(nodes)
+    listing = rated.flatten().tolist()
+    nest.SetStatus(nodes, 'rate',  listing)
+
+
+# Set Poisson generators spiking rate using a receptive filed 3x3.
+def direct_image_array_to_retina(exposed_pattern, retina, center_on_or_off, max_spiking_rate, min_spiking_rate):
+    rated = (exposed_pattern * (max_spiking_rate - min_spiking_rate)) + min_spiking_rate
+    nodes = nest.GetNodes(retina)[0]
+    print(nodes)
+    listing = rated.flatten().tolist()
+    nest.SetStatus(nodes, 'rate',  listing)
+

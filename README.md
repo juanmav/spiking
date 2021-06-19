@@ -78,3 +78,6 @@ You can check results on the `./output` folder.
 
 
 https://en.wikipedia.org/wiki/Cortical_spreading_depression
+
+
+https://www.frontiersin.org/articles/10.3389/fnbeh.2019.00165/full

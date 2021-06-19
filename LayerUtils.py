@@ -4,6 +4,7 @@ import numpy as np
 import pandas as pd
 import png
 import subprocess
+import matplotlib.pyplot as plt
 from pathlib import Path
 import glob
 from mpi4py import MPI
@@ -126,7 +127,7 @@ class Recorder:
         comm.barrier()
 
         if rank == 0:
-            ffmpeg_command_line = 'ffmpeg -i ' + self.output_folder + '%d.png -vf "setpts=(1/1)*PTS"  -threads 16 ' + self.output_folder + f'../../{self.layer_name}.mp4'
+            ffmpeg_command_line = 'ffmpeg -i ' + self.output_folder + '%d.png -vf "setpts=(1/1)*PTS"  -threads 8 ' + self.output_folder + f'../../{self.layer_name}.mp4'
             print(ffmpeg_command_line)
             subprocess.call(
                 ffmpeg_command_line,

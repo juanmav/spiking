@@ -15,7 +15,7 @@ conn_parrot_v1_dict = {
     "connection_type": "convergent",
     "mask": {
         "circular": {
-            "radius": 0.5
+            "radius": 0.1
         }
     },
     # "kernel": {
@@ -24,7 +24,7 @@ conn_parrot_v1_dict = {
     #        "sigma": 0.05
     #    }
     # },
-    "weights": 3.0,
+    "weights": 1.0,
     # "delays": {
     #     "linear": {
     #         "c": 0.1,
