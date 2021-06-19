@@ -36,6 +36,8 @@ SPATIAL_WIDTH_AND_HEIGHT = 1.0 * round(sqrt(HYPER_COLUMNS), 2)
 # Distribution is usually 1 inhibitory, 4 excitatory
 TOTAL_NEURONS_PER_COMBINED_COLUMN_LAYER = int(os.getenv("TOTAL_NEURONS_PER_COMBINED_COLUMN_LAYER", 30))
 TOTAL_NEURONS_COUNT = HYPER_COLUMNS * WIDTH_HEIGHT_HYPER_COLUMN ** 2 * TOTAL_NEURONS_PER_COMBINED_COLUMN_LAYER
+HYPER_COLUMNS_EXPOSED = int(os.getenv("HYPER_COLUMNS_EXPOSED", 1))
+TOTAL_NEURONS_EXPOSED_COUNT = HYPER_COLUMNS_EXPOSED * WIDTH_HEIGHT_HYPER_COLUMN ** 2 * TOTAL_NEURONS_PER_COMBINED_COLUMN_LAYER
 TOTAL_EXCITATORY = TOTAL_NEURONS_COUNT * float(os.getenv("EXCITATORY_PROP", 0.8))
 TOTAL_INHIBITORY = TOTAL_NEURONS_COUNT * float(os.getenv("INHIBITORY_PROP", 0.2))
 # Square layer proportional to the amount.
@@ -46,7 +48,8 @@ print("EX_V1_WIDTH_AND_HEIGHT = " + str(EX_V1_WIDTH_AND_HEIGHT))
 print("IN_V1_WIDTH_AND_HEIGHT = " + str(IN_V1_WIDTH_AND_HEIGHT))
 
 # Receptive field size TODO check this.
-image_size = EX_V1_WIDTH_AND_HEIGHT
+total_image_size = ceil(sqrt(TOTAL_NEURONS_COUNT))  # EX_V1_WIDTH_AND_HEIGHT
+pattern_image_size = ceil(sqrt(TOTAL_NEURONS_EXPOSED_COUNT))
 
 #
 max_spiking_rate = int(os.getenv("MAX_SPIKING_RATE", 100))
@@ -71,15 +74,15 @@ nest.CopyModel("izhikevich", INHIBITORY, FS_dict)
 
 retina_dict = {
     "extent": [SPATIAL_WIDTH_AND_HEIGHT, SPATIAL_WIDTH_AND_HEIGHT],
-    "rows": EX_V1_WIDTH_AND_HEIGHT,
-    "columns": EX_V1_WIDTH_AND_HEIGHT,
+    "rows": total_image_size,
+    "columns": total_image_size,
     "elements": "poisson_generator"
 }
 
 parrot_layer_dict = {
     "extent": [SPATIAL_WIDTH_AND_HEIGHT, SPATIAL_WIDTH_AND_HEIGHT],
-    "rows": EX_V1_WIDTH_AND_HEIGHT,
-    "columns": EX_V1_WIDTH_AND_HEIGHT,
+    "rows": total_image_size,
+    "columns": total_image_size,
     "elements": "parrot_neuron"
 }
 
@@ -197,14 +200,15 @@ recorder6 = Recorder(in_off_center, 'in_off_center', simulation_prefix, simulati
 # image_array_0 = np.divide(array_from_image("./images/pattern0.png"), 255)
 # image_array_1 = np.divide(array_from_image("./images/pattern1.png"), 255)
 # Patterns from numpy
-proportion = ceil(image_size / len(get_pattern_0()))
-image_array_0 = np.kron(np.array(get_pattern_0()), np.ones((proportion, proportion)))
-image_array_1 = np.kron(np.array(get_pattern_1()), np.ones((proportion, proportion)))
+proportion = ceil(pattern_image_size / len(get_pattern_0()))
+pattern_image_array_0 = np.kron(np.array(get_pattern_0()), np.ones((proportion, proportion)))
+pattern_image_array_1 = np.kron(np.array(get_pattern_1()), np.ones((proportion, proportion)))
 
-image_array_3 = get_crossed_gabor_pattern(image_size)
+image_array_0 = np.pad(pattern_image_array_0, ceil((total_image_size - pattern_image_size)/2), 'constant', constant_values=0)
+image_array_1 = np.pad(pattern_image_array_0, ceil((total_image_size - pattern_image_size)/2), 'constant', constant_values=0)
 
 # Just for small experiments
-diff = len(image_array_0) - image_size
+diff = len(image_array_0) - total_image_size
 print('Diff: ' + str(diff))
 image_array_0 = np.delete(image_array_0, range(0, diff), 0)
 image_array_0 = np.delete(image_array_0, range(0, diff), 1)

@@ -7,8 +7,6 @@ from Gabor import get_gabor_adjusted
 import os
 
 
-# Takes an image and convert it to a 2D array.
-# This method needs an 101x101 image to work properly.
 def array_from_image(file_path):
     im = Image.open(file_path).convert('L')
     # im.show()
@@ -21,8 +19,6 @@ def array_from_image(file_path):
 
 # Set Poisson generators spiking rate using a receptive filed 3x3.
 def image_array_to_retina(exposed_pattern, retina, center_on_or_off, max_spiking_rate, min_spiking_rate):
-    # TODO Move to gabor filter orientation frequency. 2D gabor functional.
-
     _lambda = int(os.getenv("LAMBDA", 2))
     theta = int(os.getenv("THETA", 0))
     gamma = int(os.getenv("GAMMA", 3))
@@ -32,16 +28,12 @@ def image_array_to_retina(exposed_pattern, retina, center_on_or_off, max_spiking
 
     gk = get_gabor_adjusted(ksize, _lambda, theta, gamma, sigma, psi, center_on_or_off)
     gk2 = np.transpose(gk)
-    # TODO check exposed_patter and retina have same size (1 to 1 relation)
-    #kernel = center_on_kernel if center_on_or_off == 'on' else center_off_kernel
     convoluted = signal.convolve2d(exposed_pattern, gk, boundary='symm', mode='same')
     convoluted2 = signal.convolve2d(exposed_pattern, gk2, boundary='symm', mode='same')
-    # TODO https://stackoverflow.com/questions/929103/convert-a-number-range-to-another-range-maintaining-ratio
     combined = convoluted + convoluted2
     combined = combined.clip(0, 1)
     rated = (combined * (max_spiking_rate - min_spiking_rate)) + min_spiking_rate
     nodes = nest.GetNodes(retina)[0]
-    print(nodes)
     listing = rated.flatten().tolist()
     nest.SetStatus(nodes, 'rate',  listing)
 
