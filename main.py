@@ -205,7 +205,7 @@ pattern_image_array_0 = np.kron(np.array(get_pattern_0()), np.ones((proportion, 
 pattern_image_array_1 = np.kron(np.array(get_pattern_1()), np.ones((proportion, proportion)))
 
 image_array_0 = np.pad(pattern_image_array_0, ceil((total_image_size - pattern_image_size)/2), 'constant', constant_values=0.2)
-image_array_1 = np.pad(pattern_image_array_0, ceil((total_image_size - pattern_image_size)/2), 'constant', constant_values=0.2)
+image_array_1 = np.pad(pattern_image_array_1, ceil((total_image_size - pattern_image_size)/2), 'constant', constant_values=0.2)
 
 # Just for small experiments
 diff = len(image_array_0) - total_image_size
