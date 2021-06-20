@@ -156,7 +156,7 @@ class Recorder:
         square = np.reshape(image_frame_array, (-1, int(self.layer_size ** (1 / 2.0))))
         spike_count = np.sum(square)
         # "Zoom/Expand" array to make images "nicer"
-        square = np.kron(square, np.ones((10, 10)))
+        # square = np.kron(square, np.ones((10, 10)))
         # here magic
         rgb_per_spike = ((255*1000) / (self.group_frames * self.max_spiking_rate))
         square = square * (rgb_per_spike if rgb_per_spike < 255 else 255)
